@@ -6,6 +6,13 @@ A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, visi
 
 This project implements a comprehensive robot navigation system that combines multiple sensor modalities (LiDAR and vision) with intelligent pathfinding algorithms to enable autonomous navigation through varied terrain. The system processes sensor data, builds occupancy maps, detects colored objects, and computes optimal paths using A* search.
 
+## Project Purpose
+
+- Develop a simulated protocol for search and rescue using multiple mobile robots
+- Robots can navigate dangerous environments without endangering humans
+- Multiple robots can quickly sweep an area
+- Coordination enables more efficient search and rescue
+
 ## Features
 
 - **Vision Sensor Processing**
