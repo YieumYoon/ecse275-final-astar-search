@@ -13,6 +13,8 @@ This project implements a comprehensive robot navigation system that combines mu
 - Multiple robots can quickly sweep an area
 - Coordination enables more efficient search and rescue
 
+![Rescue Robot](RescueRobotIMG1.jpg)
+
 ## Features
 
 - **Vision Sensor Processing**
