@@ -14,11 +14,19 @@ import time
 import matplotlib.pyplot as plt
 import threading
 
-# Global lock for thread-safe map access
+# Global locks for thread-safe access
 map_lock = threading.Lock()
+goals_lock = threading.Lock()
+
+# Global goals tracking
+goals_data = {
+    'positions': [],      # List of goal world positions [(x, y, z), ...]
+    'completed': [],      # List of booleans tracking completion status
+    'assigned_to': []     # List of robot names or None for each goal
+}
 
 
-def robot_control_thread(robot_name, robot_info, worldmap, goal_handle, R, Resolution, scan_interval):
+def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_interval):
     """
     Thread function for controlling a single robot.
     Each robot runs its own scanning, detection, and pathfinding loop.
@@ -27,7 +35,6 @@ def robot_control_thread(robot_name, robot_info, worldmap, goal_handle, R, Resol
         robot_name: Name of the robot (e.g., "/Robot_0")
         robot_info: Dictionary containing robot handles
         worldmap: Shared map object (thread-safe with lock)
-        goal_handle: Goal object handle
         R: Cell size
         Resolution: Map resolution
         scan_interval: Time between scans
@@ -38,6 +45,17 @@ def robot_control_thread(robot_name, robot_info, worldmap, goal_handle, R, Resol
     sim = client.getObject('sim')
     print(f"[{robot_name}] ZMQ connection established!")
     
+    # Get fresh handles using this thread's sim object
+    print(f"[{robot_name}] Getting object handles...")
+    robot_handle = sim.getObjectHandle(robot_name)
+    lidar_handle = sim.getObjectHandle(f"{robot_name}/fastHokuyo_0")
+    vision_handle = sim.getObjectHandle(f"{robot_name}/visionSensor")
+    script_handle = sim.getScript(sim.scripttype_childscript, robot_name)
+    print(f"[{robot_name}] Handles acquired successfully!")
+    
+    # Track current goal assignment for this robot
+    current_goal_index = None
+    
     scan_count = 0
     
     while True:
@@ -45,21 +63,101 @@ def robot_control_thread(robot_name, robot_info, worldmap, goal_handle, R, Resol
         print(f"\n[{robot_name}] Scan #{scan_count} - Time: {time.time():.2f}")
         
         # Update robot position
-        robot_pos = sim.getObjectPosition(robot_info["handle"], sim.handle_world)
+        robot_pos = sim.getObjectPosition(robot_handle, sim.handle_world)
         robot_map = Func.Convert_world_to_map(robot_pos[0], robot_pos[1], R, Resolution)
         
-        # Update goal position
-        goal_world = sim.getObjectPosition(goal_handle, sim.handle_world)
-        
-        
         print(f"[{robot_name}] Position: World {robot_pos[:2]}, Map {robot_map}")
+        
+        # ===========================================
+        # GOAL COMPLETION CHECK - Poll Lua Status
+        # ===========================================
+        
+        # Check if Lua controller says goal is reached
+        if current_goal_index is not None:
+            goal_reached = sim.callScriptFunction('getGoalStatus', script_handle)
+            
+            if goal_reached:
+                print(f"[{robot_name}] *** LUA REPORTS GOAL {current_goal_index} REACHED! ***")
+                
+                with goals_lock:
+                    goal_world = goals_data['positions'][current_goal_index]
+                    print(f"[{robot_name}] Goal was at: {goal_world[:2]}")
+                    print(f"[{robot_name}] Robot is at: {robot_pos[:2]}")
+                    
+                    # Mark goal as completed
+                    goals_data['completed'][current_goal_index] = True
+                    goals_data['assigned_to'][current_goal_index] = None
+                    current_goal_index = None
+                    print(f"[{robot_name}] Goal marked as completed, will find next goal...")
+        
+        # ===========================================
+        # GOAL ASSIGNMENT LOGIC
+        # ===========================================
+        
+        # Assign new goal if needed
+        if current_goal_index is None:
+            print(f"[{robot_name}] No current goal, finding nearest uncompleted goal...")
+            with goals_lock:
+                # Find nearest uncompleted AND unassigned goal
+                min_distance = float('inf')
+                nearest_goal_idx = None
+                
+                for idx in range(len(goals_data['positions'])):
+                    # Skip if completed OR already assigned to another robot
+                    if goals_data['completed'][idx]:
+                        print(f"[{robot_name}] Goal {idx}: COMPLETED")
+                        continue
+                    if goals_data['assigned_to'][idx] is not None and goals_data['assigned_to'][idx] != robot_name:
+                        print(f"[{robot_name}] Goal {idx}: Already assigned to {goals_data['assigned_to'][idx]}")
+                        continue
+                        
+                    goal_pos = goals_data['positions'][idx]
+                    dist = math.sqrt(
+                        (robot_pos[0] - goal_pos[0])**2 + 
+                        (robot_pos[1] - goal_pos[1])**2
+                    )
+                    print(f"[{robot_name}] Goal {idx}: distance = {dist:.3f}m, available")
+                    if dist < min_distance:
+                        min_distance = dist
+                        nearest_goal_idx = idx
+                
+                if nearest_goal_idx is not None:
+                    current_goal_index = nearest_goal_idx
+                    goals_data['assigned_to'][current_goal_index] = robot_name
+                    
+                    # Mark goal cell as floor (not obstacle) to ensure pathfinding works
+                    goal_pos = goals_data['positions'][current_goal_index]
+                    goal_map_coord = Func.Convert_world_to_map(goal_pos[0], goal_pos[1], R, Resolution)
+                    gi, gj = goal_map_coord
+                    if 0 <= gi < Resolution and 0 <= gj < Resolution:
+                        with map_lock:
+                            worldmap[gi][gj].setTerrainNum(Func.TerrainType.floor)
+                    
+                    print(f"[{robot_name}] *** ASSIGNED TO GOAL {current_goal_index} at {goals_data['positions'][current_goal_index][:2]} ***")
+                else:
+                    print(f"[{robot_name}] *** ALL GOALS COMPLETED! No more goals available! ***")
+                    time.sleep(scan_interval)
+                    continue
+        
+        # Get current goal position
+        with goals_lock:
+            goal_world = goals_data['positions'][current_goal_index]
+            goal_map = Func.Convert_world_to_map(goal_world[0], goal_world[1], R, Resolution)
+            
+            # IMPORTANT: Always ensure goal cell is floor (not obstacle) on every scan
+            gi, gj = goal_map
+            if 0 <= gi < Resolution and 0 <= gj < Resolution:
+                with map_lock:
+                    worldmap[gi][gj].setTerrainNum(Func.TerrainType.floor)
+        
+        print(f"[{robot_name}] Current Goal {current_goal_index}: World {goal_world[:2]}, Map {goal_map}")
         
         # 1. Scan terrain using LiDAR
         print(f"[{robot_name}] Scanning with LiDAR...")
         segmented_points = Func.process_Lidar_depth(sim, f'{robot_name}/fastHokuyo_0', 0.2)
         
         # Get LiDAR sensor matrix for coordinate transformation
-        sensor_matrix = sim.getObjectMatrix(robot_info["lidar"], sim.handle_world)
+        sensor_matrix = sim.getObjectMatrix(lidar_handle, sim.handle_world)
         
         # 2. Process LiDAR segments - find centroids
         centroids_sensor = []
@@ -76,7 +174,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, goal_handle, R, Resol
         
         # 4. Vision sensor processing
         print(f"[{robot_name}] Processing vision sensor...")
-        visionSensor_matrix = sim.getObjectMatrix(robot_info["vision"], sim.handle_world)
+        visionSensor_matrix = sim.getObjectMatrix(vision_handle, sim.handle_world)
         
         # Get RGB image and depth map
         imgL, res = Func.process_vision_Sensor_RBG(sim, f"{robot_name[1:]}/visionSensor")
@@ -147,8 +245,34 @@ def robot_control_thread(robot_name, robot_info, worldmap, goal_handle, R, Resol
         if terrain_array:
             print(f"[{robot_name}] Acquiring map lock to update...")
             with map_lock:
-                Func.Update_map(worldmap, terrain_array, Resolution)
-                print(f"[{robot_name}] Map updated with {len(terrain_array)} terrain objects")
+                # Filter out terrain objects that are out of bounds
+                valid_terrain = []
+                for terrain_obj in terrain_array:
+                    coord = terrain_obj.getCoordinateArray()
+                    map_coord = Func.Convert_world_to_map(coord[0], coord[1], R, Resolution)
+                    i, j = map_coord
+                    
+                    # Check if within bounds
+                    if 0 <= i < Resolution and 0 <= j < Resolution:
+                        valid_terrain.append(terrain_obj)
+                    else:
+                        print(f"[{robot_name}] Warning: Terrain at ({i}, {j}) is out of bounds, skipping")
+                
+                if valid_terrain:
+                    Func.Update_map(worldmap, valid_terrain, Resolution)
+                    print(f"[{robot_name}] Map updated with {len(valid_terrain)} terrain objects")
+                    
+                    # After updating map, re-protect all active goal cells
+                    with goals_lock:
+                        for idx in range(len(goals_data['positions'])):
+                            if not goals_data['completed'][idx]:
+                                g_pos = goals_data['positions'][idx]
+                                g_map = Func.Convert_world_to_map(g_pos[0], g_pos[1], R, Resolution)
+                                gi, gj = g_map
+                                if 0 <= gi < Resolution and 0 <= gj < Resolution:
+                                    worldmap[gi][gj].setTerrainNum(Func.TerrainType.floor)
+                else:
+                    print(f"[{robot_name}] No valid terrain to update")
             print(f"[{robot_name}] Map lock released")
         
         # 8. Run A* pathfinding with thread-safe map access
@@ -178,8 +302,9 @@ def robot_control_thread(robot_name, robot_info, worldmap, goal_handle, R, Resol
                 world_path.append((goal_world[0], goal_world[1]))
             
             # 10. Send path to robot
-            sim.callScriptFunction('setPath', robot_info["script"], world_path)
+            sim.callScriptFunction('setPath', script_handle, world_path)
             print(f"[{robot_name}] Path sent to robot!")
+            print(f"[{robot_name}] First 3 waypoints: {world_path[:3]}")
         else:
             print(f"[{robot_name}] ERROR: No path found!")
         
@@ -206,13 +331,26 @@ if __name__ == "__main__" :
     worldmap = Func.createMap_withResolution(Resolution)
     print("Map initialized!")
     
-    # 3. Get goal position and convert to map coordinates
-    print("\n--- Goal Position ---")
-    goal = sim.getObjectHandle("/goal_point")
-    goal_world = sim.getObjectPosition(goal, sim.handle_world)
-    goal_map = Func.Convert_world_to_map(goal_world[0], goal_world[1], R, Resolution)
-    print(f"Goal (world): {goal_world}")
-    print(f"Goal (map): {goal_map}")
+    # 3. Get goal positions and initialize tracking
+    print("\n--- Initializing Goals ---")
+    goal_names = ["/goal_point","/goal_point_1","/goal_point_2","/goal_point_3","/goal_point_4"]  # Add more goal names here like ["/goal_point", "/goal_point_2", "/goal_point_3"]
+    
+    for goal_name in goal_names:
+        try:
+            goal_handle = sim.getObjectHandle(goal_name)
+            goal_pos = sim.getObjectPosition(goal_handle, sim.handle_world)
+            goals_data['positions'].append(goal_pos)
+            goals_data['completed'].append(False)
+            goals_data['assigned_to'].append(None)
+            print(f"Goal '{goal_name}' at position: {goal_pos[:2]}")
+        except Exception as e:
+            print(f"Warning: Could not find goal '{goal_name}': {e}")
+    
+    print(f"Total goals initialized: {len(goals_data['positions'])}")
+    
+    if len(goals_data['positions']) == 0:
+        print("ERROR: No goals found! Exiting...")
+        exit(1)
     
     # 4. Initialize robots (supports 1, 2, or more robots)
     robot_names = ["/Robot_0", "/Robot_1"]   # add more if needed
@@ -258,13 +396,14 @@ if __name__ == "__main__" :
     for robot_name in robot_names:
         thread = threading.Thread(
             target=robot_control_thread,
-            args=(robot_name, robots[robot_name], worldmap, goal, R, Resolution, scan_interval),
-            daemon=True
+            args=(robot_name, robots[robot_name], worldmap, R, Resolution, scan_interval),
+            daemon=True,
+            name=f"Thread-{robot_name}"  # Name the thread for easier debugging
         )
         thread.start()
         threads.append(thread)
         print(f"Thread started for {robot_name}")
-        time.sleep(0.5)  # Small delay to stagger thread startup
+        time.sleep(1.0)  # Longer delay to ensure clean startup
     
     # Keep main thread alive
     try:
