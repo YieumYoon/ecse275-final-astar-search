@@ -1,8 +1,0 @@
-Verision_8_unconsolidated
-
-This is version should have all the tools needed to build the working interface , the rest of the project is making the GitHub and then adding robots cameras and then using the A* and deciding when to switch between robots for the A*'s and also choosing when to update the map. All the needs interface tools have been made and now should be purely a python task. 
-
-
-
-
- 
