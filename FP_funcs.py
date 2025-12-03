@@ -398,9 +398,9 @@ def astar(grid, start, goal, R, Resolution):
     goal_map = tuple(goal_map)
     
     # Check if start or goal is an obstacle
-    if grid[start_map[0]][start_map[1]].isObstacle():
-        print(f"Goal start {goal_map} is an obstacle!")
-        return None
+    #if grid[start_map[0]][start_map[1]].isObstacle():
+     #   print(f"Goal start {goal_map} is an obstacle!")
+      #  return None
     
     
     if grid[goal_map[0]][goal_map[1]].isObstacle():
