@@ -1,108 +1,85 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Nov  9 18:26:56 2025
-
-@author: halas
+Function Library for Robot Navigation System.
 """
 
 import numpy as np
 from enum import Enum
-import array
 import math
 import heapq
+from typing import Tuple, List, Optional, Union, Dict, Set
+import config
 
-def process_vision_Sensor_RBG(sim, sensor_name):
-    '''
-    This funcion takes a sim object and the Sensor Name as a string.,
-    Then it returns a 256,256 array of RGB
-    
-    Args:
-        sim: The CoppeliaSim remote API object (e.g., from client.getObject('sim')).
-        sensor_name (str): The name of the vision sensor object in the scene.
-    Returns:
-        Tuple: RBG_map , Tuple: Resolution 
-            - RGB map : 2D numpy array of (H x W) each containg a tuple of [R,G,B]
-            -Resolution: tuple of (H,W)
-    '''
-    
-    #Assumes Connection and simulation are running aldready 
-    
-    sensorHandle = sim.getObject(f'/{sensor_name}')
-    
-    #captures the RAW image form the camera sensor
-    imgL_raw, resL = sim.getVisionSensorImg(sensorHandle)
-    
-    #creates a Np array from raw buffer data and then reshapes this into a H x W , of 3 elements array
-    imgL = np.frombuffer(imgL_raw, dtype=np.uint8).reshape(resL[1], resL[0], 3)
-    
-    return imgL, resL
-
-def process_vision_sensor_depth(sim, sensor_name):
+def process_vision_sensor_rgb(sim, sensor_name: str) -> Tuple[np.ndarray, Tuple[int, int]]:
     """
-    This function takes a sim object and the sensor name as a string,
-    then returns a depth map of the vision sensor.
+    Captures the RGB image from the vision sensor.
 
     Args:
-        sim: The CoppeliaSim remote API object
-        sensor_name (str): Name of the vision sensor in the scene
+        sim: The CoppeliaSim remote API object.
+        sensor_name (str): The name of the vision sensor object.
 
     Returns:
-        Tuple: depth_map, resolution
-            - depth_map: 2D numpy array of shape (H, W) containing depth values (meters)
-            - resolution: tuple (W, H)
+        Tuple[np.ndarray, Tuple[int, int]]:
+            - RGB map: (H, W, 3) numpy array.
+            - Resolution: (W, H) tuple.
     """
-    # Get the sensor handle
-    sensorHandle = sim.getObject(f'/{sensor_name}')
-    
-    # Capture the depth buffer from the camera
-    depth_raw,res = sim.getVisionSensorDepth(sensorHandle)
-        
-    # Convert to float array
+    sensor_handle = sim.getObject(sensor_name)
+    img_raw, res = sim.getVisionSensorImg(sensor_handle)
+    img = np.frombuffer(img_raw, dtype=np.uint8).reshape(res[1], res[0], 3)
+    return img, res
+
+def process_vision_sensor_depth(sim, sensor_name: str) -> Tuple[np.ndarray, Tuple[int, int]]:
+    """
+    Captures the depth map from the vision sensor.
+
+    Args:
+        sim: The CoppeliaSim remote API object.
+        sensor_name (str): The name of the vision sensor object.
+
+    Returns:
+        Tuple[np.ndarray, Tuple[int, int]]:
+            - Depth map: (H, W) numpy array with linear depth values.
+            - Resolution: (W, H) tuple.
+    """
+    sensor_handle = sim.getObject(sensor_name)
+    depth_raw, res = sim.getVisionSensorDepth(sensor_handle)
     depth_values = sim.unpackFloatTable(depth_raw)
-
+    
     width, height = res[0], res[1]
     depth_buffer = np.array(depth_values).reshape(height, width)
 
-    # get near & far planes
-    near = sim.getObjectFloatParam(sensorHandle, sim.visionfloatparam_near_clipping)
-    far  = sim.getObjectFloatParam(sensorHandle, sim.visionfloatparam_far_clipping)
+    near = sim.getObjectFloatParam(sensor_handle, sim.visionfloatparam_near_clipping)
+    far = sim.getObjectFloatParam(sensor_handle, sim.visionfloatparam_far_clipping)
 
-    # convert to linear depth
     linear_depth = near + depth_buffer * (far - near)
-
-    
     return linear_depth, (width, height)
 
-
-def compute_pos_from_pix(pixel_uv, resolution, f, z):
-    
+def compute_pos_from_pix(pixel_uv: Tuple[int, int], resolution: Tuple[int, int], f: float, z: float) -> Tuple[float, float, float]:
+    """
+    Computes the 3D position in the camera frame from pixel coordinates and depth.
+    """
     width, height = resolution
     u, v = pixel_uv
     cx = width / 2
     cy = height / 2
-    
-    # Convert angle to radians
+
+    # f is expected to be FOV in degrees based on original code usage
     angle_rad = math.radians(f)
-    
-    # Calculate the physical width and height of the view at distance z
     view_width = 2 * z * math.tan(angle_rad / 2)
     view_height = view_width * (height / width)
-    
-    # Pixel width and height in meters
-    pw = view_width / width   # pixel width in meters
-    ph = view_height / height  # pixel height in meters
 
-    x =(u - cx) * pw 
+    pw = view_width / width
+    ph = view_height / height
+
+    x = (u - cx) * pw
     y = -(v - cy) * ph
     
-    point_cam = (x, y, z)
-    
-    return point_cam
+    return (x, y, z)
 
-def mask_color(img, target):
+def mask_color(img: np.ndarray, target: str) -> np.ndarray:
     """
-    target ∈ {"red", "green", "blue"}
     Creates a binary mask where the target color dominates.
+    target in {"red", "green", "blue"}
     """
     r = img[:, :, 0].astype(np.int32)
     g = img[:, :, 1].astype(np.int32)
@@ -115,338 +92,239 @@ def mask_color(img, target):
     elif target == "blue":
         mask = (b > r + 20) & (b > g + 20)
     else:
-        raise ValueError("Invalid target color")
+        raise ValueError(f"Invalid target color: {target}")
     return mask
 
-def centroid_from_mask(mask):
+def centroid_from_mask(mask: np.ndarray) -> Optional[np.ndarray]:
     """
-    Returns the centroid of a binary mask and the indices of all points.
-
-    Args:
-        mask: 2D binary numpy array
-
-    Returns:
-        tuple: (centroid, indices)
-            - centroid: np.array([mean_x, mean_y])
-            - indices: tuple of arrays (ys, xs)
+    Returns the centroid of a binary mask.
     """
-    ys, xs = np.where(mask)  # rows → y, cols → x
-
+    ys, xs = np.where(mask)
     if len(xs) == 0:
         return None
+    return np.array([np.mean(xs), np.mean(ys)])
 
-    centroid = np.array([np.mean(xs), np.mean(ys)])
-    return centroid
+def process_lidar_depth(sim, sensor_name: str, threshold: float) -> List[np.ndarray]:
+    """
+    Processes LiDAR data to find segments.
+    """
+    script_handle = sim.getScript(sim.scripttype_childscript, sensor_name)
+    raw_data = sim.callScriptFunction('getMeasuredData', script_handle)
+    shaped_data = np.array(raw_data).reshape(-1, 3)
+    return segment_lidar(shaped_data, threshold)
 
-def depth_from_rgb_mask(depth_map, rgb_mask):
-    if depth_map.shape != rgb_mask.shape:
-        raise ValueError("Depth map and RGB mask must have the same shape")
-    masked_depth = np.zeros_like(depth_map, dtype=np.float32)
-    masked_depth[rgb_mask] = depth_map[rgb_mask]
-    return masked_depth
-
-def process_Lidar_depth(sim,sensor_name,threshold):
-    '''
-    This function calls the getMeasure data of Hokuyo, and then makes it into a
-    1 x 3 array from x , y , z. with each point is a point of contact with an obstacle. 
-    '''
-    scriptHandle = sim.getScript(sim.scripttype_childscript, sensor_name)
-    raw_Data = sim.callScriptFunction('getMeasuredData',scriptHandle)
-    shaped_data = np.array(raw_Data).reshape(-1, 3)
-    
-    segmented_points = segment_lidar(shaped_data,threshold)
-    
-    return segmented_points
-
-def transform_point(mat, point):
-    # mat: 3x4 flattened → same as CoppeliaSim
+def transform_point(mat: List[float], point: Union[np.ndarray, List[float], Tuple[float, ...]]) -> np.ndarray:
+    """
+    Transforms a point using a flattened 3x4 matrix.
+    """
     x = mat[0]*point[0] + mat[1]*point[1] + mat[2]*point[2] + mat[3]
     y = mat[4]*point[0] + mat[5]*point[1] + mat[6]*point[2] + mat[7]
     z = mat[8]*point[0] + mat[9]*point[1] + mat[10]*point[2] + mat[11]
     return np.array([x, y, z])
 
-
-def segment_lidar(points, threshold):
-    diffs = np.diff(points[:, :2], axis=0)  # use x,y only
+def segment_lidar(points: np.ndarray, threshold: float) -> List[np.ndarray]:
+    """
+    Segments LiDAR points based on distance jumps.
+    """
+    if len(points) == 0:
+        return []
+        
+    diffs = np.diff(points[:, :2], axis=0)
     dist = np.linalg.norm(diffs, axis=1)
-
-    # indices where a jump happens
     break_idx = np.where(dist > threshold)[0]
 
     segments = []
     start = 0
-
     for idx in break_idx:
         segments.append(points[start:idx+1])
-        start = idx+1
-
-    # last segment
+        start = idx + 1
+    
     if start < len(points):
         segments.append(points[start:])
-
     return segments
-    
-'''
-Update map function, this is a function that would take the grip_map 
-and takes a N length array of terrain objects to update the map.
-
-    grid - gridmap of terrain objects the current world map
-    terrain_array - terrain objects array 
-    Resolution - Pass in the Resolution of the map
-    
-    updates the grid map given
-'''
-def Update_map(grid,terrain_array,Resolution):
-    n = len(grid)
-    for i in range(len(terrain_array)):
-        currTerrain = terrain_array[i]
-        Terrain_world_coord = currTerrain.getCoordinateArray()
-        Terrain_map_coord = Convert_world_to_map(Terrain_world_coord[0],Terrain_world_coord[1],10/Resolution,Resolution)
-        # Place terrain at its position
-        i,j = Terrain_map_coord
-        grid[i][j]= currTerrain
-        get_cells_to_fill(currTerrain, Resolution, i, j, grid)
-        
-                
-                
-'''
-Helper function for the Update map function that gets all the cells to fill 
-function not eleborated properly since it is a backend use only code. 
-
-'''
-def get_cells_to_fill(terrain_obj,Resolution,i,j,grid):
-    R = 10/Resolution
-    width = terrain_obj.getWidth()
-    if width <= R:
-        return
-    else:
-        print("else case is triggered")
-        num_squares_to_fill = int(width/R)
-        leftmost_i = (i - num_squares_to_fill//2) 
-        topmost_j = (j - num_squares_to_fill//2)
-        
-        rightmost = leftmost_i + num_squares_to_fill
-        bottom_most = topmost_j + num_squares_to_fill
-        for iterating_width in range(leftmost_i,rightmost):
-            for iterating_length in range(topmost_j,bottom_most):
-                # Bounds check
-                if 0 <= iterating_width < Resolution and 0 <= iterating_length < Resolution:
-                    grid[iterating_width, iterating_length] = terrain_obj
-    
-        
-        
-    
-        
-"""
-This is a function to convert from a world coordinate point into a discreet map point
-assumes (0,0) is the center of the map
-
-Xw - X position of point detected 
-Yw - Y position of the point detected 
-R - width of the sqaure world discret space
-Resolution - The resolution of the map  
-
-Returns [X position in map,Y position in map]
-"""
-def Convert_world_to_map(Xw, Yw, R, Resolution):
-    half = Resolution / 2
-    i = Xw / R + half
-    j = Yw / R + half
-    return [int(i), int(j)]
-
-
-'''
-This is a function that goes from map coordianted to world coordinates , with 
-'''
-def Convert_map_to_world(i, j, R, Resolution):
-    half = Resolution / 2
-    Xw = (i - half) * R
-    Yw = (j - half) * R
-    return [Xw, Yw]
-    
-
-"""
-This Function creates a Numpy array of N by N Zeros where N is the resolution of the map
-The value at each coordinate is the cost to come for that coordinate
-"""
-def createMap_withResolution(Resolution):
-    Map = np.zeros((Resolution,Resolution),dtype=object)
-    R = 10/Resolution
-    for i in range(0,Resolution):
-        for j in range(0,Resolution):
-            Map[i][j] = terrain(
-                width=0,
-                Coordinate=Convert_map_to_world(i, j,R, Resolution),
-                terrain=TerrainType.floor,
-                resolution=Resolution
-            )
-                
-    return Map
-
-"""
-Classes , obstacle , terrain and interupt interface
-"""
 
 class TerrainType(Enum):
-    floor = 0
-    grass = 1
-    Sand = 2
-    water = 3
-    obstacle = 4
-        
-    
-class terrain():
-    def __init__(self,width =0,Coordinate = None, terrain :TerrainType = None,resolution=5):
+    FLOOR = 0
+    GRASS = 1
+    SAND = 2
+    WATER = 3
+    OBSTACLE = 4
+
+class Terrain:
+    def __init__(self, width: float = 0, coordinate: Optional[List[float]] = None, terrain_type: TerrainType = TerrainType.FLOOR, resolution: int = 5):
         self.width = width
-        self.obstacleCoords = Coordinate
-        self.terrain = terrain
+        self.obstacle_coords = coordinate
+        self.terrain_type = terrain_type
         self.resolution = resolution
         
-        
-    def getWidth(self):
+        # Calculate map indices (i, j) from world coordinates if available
+        if coordinate:
+            # Assuming coordinate is [x, y] or [x, y, z]
+            R = config.WORLD_SIZE / resolution
+            map_coords = convert_world_to_map(coordinate[0], coordinate[1], R, resolution)
+            self.i = map_coords[0]
+            self.j = map_coords[1]
+        else:
+            self.i = 0
+            self.j = 0
+
+    def get_width(self) -> float:
         return self.width
     
-    def setWidth(self, width):
+    def set_width(self, width: float):
         self.width = width
     
-    def getCoordinateArray(self):
-        return self.obstacleCoords
+    def get_coordinate_array(self) -> Optional[List[float]]:
+        return self.obstacle_coords
     
-    def isFloor(self):
-        if self.getTerrainNum() == 0:
-            return True
-        return False
+    def is_floor(self) -> bool:
+        return self.terrain_type == TerrainType.FLOOR
     
-    def isObstacle(self):
-        if self.getTerrainNum() == 4:
-            return True
-        return False
+    def is_obstacle(self) -> bool:
+        return self.terrain_type == TerrainType.OBSTACLE
     
-    
-    def getTerrainCost(self):
-        match self.terrain:
-            case 0:
-                return 0
-            case 1:
-                return 2
-            case 2:
-                return 4
-            case 3:
-                return 8
-            case 4:
-                return math.inf
+    def get_terrain_cost(self) -> float:
+        if self.terrain_type == TerrainType.FLOOR:
+            return 0
+        elif self.terrain_type == TerrainType.GRASS:
+            return 2
+        elif self.terrain_type == TerrainType.SAND:
+            return 4
+        elif self.terrain_type == TerrainType.WATER:
+            return 8
+        elif self.terrain_type == TerrainType.OBSTACLE:
+            return math.inf
         return 0
-    def getTerrainNum(self):
-        return self.terrain.value
-    
-    def setTerrainNum(self,terrain :TerrainType):
-        self.terrain = terrain
-    
-    
-    def get_world_coords(self):
-        return (self.i * self.resolution, self.j * self.resolution)
-    
-    
 
+    def get_terrain_num(self) -> int:
+        return self.terrain_type.value
+    
+    def set_terrain_type(self, terrain_type: TerrainType):
+        self.terrain_type = terrain_type
+    
+    def get_world_coords(self) -> Tuple[float, float]:
+        R = config.WORLD_SIZE / self.resolution
+        return tuple(convert_map_to_world(self.i, self.j, R, self.resolution))
 
-"""
-A* Algorithm Implementation (4-connected)
-------------------------------------------------
-Heuristic: Euclidean distance between current cell and goal.
-"""
+def convert_world_to_map(xw: float, yw: float, r: float, resolution: int) -> List[int]:
+    half = resolution / 2
+    i = xw / r + half
+    j = yw / r + half
+    return [int(i), int(j)]
 
-def heuristic(a, b):
+def convert_map_to_world(i: int, j: int, r: float, resolution: int) -> List[float]:
+    half = resolution / 2
+    xw = (i - half) * r
+    yw = (j - half) * r
+    return [xw, yw]
+
+def get_cells_to_fill(terrain_obj: Terrain, resolution: int, i: int, j: int, grid: np.ndarray):
+    r = config.WORLD_SIZE / resolution
+    width = terrain_obj.get_width()
+    if width <= r:
+        return
+    
+    num_squares_to_fill = int(width / r)
+    leftmost_i = (i - num_squares_to_fill // 2)
+    topmost_j = (j - num_squares_to_fill // 2)
+    
+    rightmost = leftmost_i + num_squares_to_fill
+    bottom_most = topmost_j + num_squares_to_fill
+    
+    for w in range(leftmost_i, rightmost):
+        for l in range(topmost_j, bottom_most):
+            if 0 <= w < resolution and 0 <= l < resolution:
+                grid[w, l] = terrain_obj
+
+def update_map(grid: np.ndarray, terrain_array: List[Terrain], resolution: int):
+    for curr_terrain in terrain_array:
+        terrain_world_coord = curr_terrain.get_coordinate_array()
+        if terrain_world_coord:
+            terrain_map_coord = convert_world_to_map(terrain_world_coord[0], terrain_world_coord[1], config.WORLD_SIZE/resolution, resolution)
+            i, j = terrain_map_coord
+            if 0 <= i < resolution and 0 <= j < resolution:
+                grid[i][j] = curr_terrain
+                get_cells_to_fill(curr_terrain, resolution, i, j, grid)
+
+def create_map_with_resolution(resolution: int) -> np.ndarray:
+    grid = np.zeros((resolution, resolution), dtype=object)
+    r = config.WORLD_SIZE / resolution
+    for i in range(resolution):
+        for j in range(resolution):
+            grid[i][j] = Terrain(
+                width=0,
+                coordinate=convert_map_to_world(i, j, r, resolution),
+                terrain_type=TerrainType.FLOOR,
+                resolution=resolution
+            )
+            # Manually set i and j since they are known here
+            grid[i][j].i = i
+            grid[i][j].j = j
+    return grid
+
+def heuristic(a: Tuple[int, int], b: Tuple[int, int]) -> float:
     return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
-
-def get_neighbors(pos, grid_size):
+def get_neighbors(pos: Tuple[int, int], grid_size: int) -> List[Tuple[int, int]]:
     i, j = pos
-    n = grid_size
     neighbors = []
-    # 4-connected neighborhood (up, down, left, right)
-    if i > 0:
-        neighbors.append((i - 1, j))
-    if i < n - 1:
-        neighbors.append((i + 1, j))
-    if j > 0:
-        neighbors.append((i, j - 1))
-    if j < n - 1:
-        neighbors.append((i, j + 1))
+    if i > 0: neighbors.append((i - 1, j))
+    if i < grid_size - 1: neighbors.append((i + 1, j))
+    if j > 0: neighbors.append((i, j - 1))
+    if j < grid_size - 1: neighbors.append((i, j + 1))
     return neighbors
 
+def astar(grid: np.ndarray, start: List[float], goal: List[float], r: float, resolution: int) -> Optional[List[Tuple[int, int]]]:
+    start_map = tuple(convert_world_to_map(start[0], start[1], r, resolution))
+    goal_map = tuple(convert_world_to_map(goal[0], goal[1], r, resolution))
+    
+    # Bounds check
+    if not (0 <= start_map[0] < resolution and 0 <= start_map[1] < resolution):
+        print(f"Start position {start_map} is out of bounds")
+        return None
+    if not (0 <= goal_map[0] < resolution and 0 <= goal_map[1] < resolution):
+        print(f"Goal position {goal_map} is out of bounds")
+        return None
 
-def astar(grid, start, goal, R, Resolution):
-    """
-    A* pathfinding algorithm.
-    
-    Args:
-        grid: 2D numpy array of terrain objects
-        start: World coordinates [x, y] or [x, y, z]
-        goal: World coordinates [x, y] or [x, y, z]
-        R: Cell size (world_size / Resolution)
-        Resolution: Grid resolution
-    
-    Returns:
-        List of (i, j) map coordinates from start to goal, or None if no path.
-    """
-    n = len(grid)
-    
-    # Convert world coordinates to map coordinates
-    start_map = Convert_world_to_map(start[0], start[1], R, Resolution)
-    start_map = tuple(start_map)
-    goal_map = Convert_world_to_map(goal[0], goal[1], R, Resolution)
-    goal_map = tuple(goal_map)
-    
-    # Check if start or goal is an obstacle
-    if grid[start_map[0]][start_map[1]].isObstacle():
-        print(f"Goal start {goal_map} is an obstacle!")
+    if grid[start_map[0]][start_map[1]].is_obstacle():
+        print(f"Start position {start_map} is an obstacle!")
         return None
     
-    
-    if grid[goal_map[0]][goal_map[1]].isObstacle():
-        print(f"Goal position {goal_map} is an obstacle! !!!!!!")
+    if grid[goal_map[0]][goal_map[1]].is_obstacle():
+        print(f"Goal position {goal_map} is an obstacle!")
         return None
     
-    # Priority queue: (f_cost, node)
     open_set = []
     heapq.heappush(open_set, (0, start_map))
     
     came_from = {}
-    g_score = {start_map: 0}  # cost_to_come
-    
-    # Track visited nodes to avoid reprocessing
+    g_score = {start_map: 0}
     closed_set = set()
 
     while open_set:
         _, current = heapq.heappop(open_set)
         
-        # Skip if already processed
         if current in closed_set:
             continue
         closed_set.add(current)
         
-        # Goal reached
         if current == goal_map:
             path = []
             while current in came_from:
                 path.append(current)
                 current = came_from[current]
             path.append(start_map)
-            return path[::-1]  # Reverse: start -> goal
+            return path[::-1]
         
-        for neighbor in get_neighbors(current, n):
+        for neighbor in get_neighbors(current, resolution):
             if neighbor in closed_set:
                 continue
                 
             neighbor_cell = grid[neighbor[0]][neighbor[1]]
-            
-            # Skip obstacles
-            if neighbor_cell.isObstacle():
+            if neighbor_cell.is_obstacle():
                 continue
             
-            terrain_cost = neighbor_cell.getTerrainCost()
-            
-            # Cost = previous cost + 1 (movement) + terrain penalty
+            terrain_cost = neighbor_cell.get_terrain_cost()
             tentative_g = g_score[current] + 1 + terrain_cost
             
             if neighbor not in g_score or tentative_g < g_score[neighbor]:
@@ -455,24 +333,13 @@ def astar(grid, start, goal, R, Resolution):
                 heapq.heappush(open_set, (f_score, neighbor))
                 came_from[neighbor] = current
 
-    # At the end of astar, before "return None"
     print(f"A* exhausted. Explored {len(closed_set)} cells")
-    print(f"Closed set: {closed_set}")
-    print(f"Start map: {start_map}, Goal map: {goal_map}")
+    return None
 
-    return None  # No path found
-
-
-def a_star_path_to_coppelia_points(path, grid, resolution, z_height=0.0):
+def a_star_path_to_coppelia_points(path: List[Tuple[int, int]], grid: np.ndarray, z_height: float = 0.0) -> List[float]:
     pts = []
     for (i, j) in path:
-        terrain_obj = grid[i][j].getTerrain()  
+        terrain_obj = grid[i][j]
         x, y = terrain_obj.get_world_coords()
         pts.extend([x, y, z_height])
     return pts
-
-
-
-
-
-

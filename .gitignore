@@ -1,8 +1,6 @@
 .env
 .DS_Store
 
-*.ttt
-
 __pycache__/
 *.pyc
 *.pyo
