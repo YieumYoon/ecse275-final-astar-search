@@ -14,6 +14,15 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import threading
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(threadName)s] %(levelname)s: %(message)s',
+    datefmt='%H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # Global locks for thread-safe access
 map_lock = threading.Lock()
@@ -141,7 +150,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
                     if 0 <= gi < Resolution and 0 <= gj < Resolution:
                         with map_lock:
                             worldmap[gi][gj].setTerrainNum(
-                                Func.TerrainType.floor)
+                                Func.TerrainType.FLOOR)
 
                     print(
                         f"[{robot_name}] *** ASSIGNED TO GOAL {current_goal_index} at {goals_data['positions'][current_goal_index][:2]} ***")
@@ -161,7 +170,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             gi, gj = goal_map
             if 0 <= gi < Resolution and 0 <= gj < Resolution:
                 with map_lock:
-                    worldmap[gi][gj].setTerrainNum(Func.TerrainType.floor)
+                    worldmap[gi][gj].setTerrainNum(Func.TerrainType.FLOOR)
 
         print(
             f"[{robot_name}] Current Goal {current_goal_index}: World {goal_world[:2]}, Map {goal_map}")
@@ -216,7 +225,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             red_world_coord = Func.transform_point(
                 visionSensor_matrix, camera_frame_coord)
             terrain_detections.append(
-                ("red", red_world_coord, Func.TerrainType.obstacle))
+                ("red", red_world_coord, Func.TerrainType.OBSTACLE))
 
         # Green terrain detection
         mask_green = Func.mask_color(imgL, "green")
@@ -230,7 +239,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             green_world_coord = Func.transform_point(
                 visionSensor_matrix, camera_frame_coord)
             terrain_detections.append(
-                ("green", green_world_coord, Func.TerrainType.grass))
+                ("green", green_world_coord, Func.TerrainType.GRASS))
 
         # Blue terrain detection
         mask_blue = Func.mask_color(imgL, "blue")
@@ -244,7 +253,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             blue_world_coord = Func.transform_point(
                 visionSensor_matrix, camera_frame_coord)
             terrain_detections.append(
-                ("blue", blue_world_coord, Func.TerrainType.water))
+                ("blue", blue_world_coord, Func.TerrainType.WATER))
 
         # 6. Build terrain array
         terrain_array = []
@@ -264,7 +273,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             terrain_obj = Func.terrain(
                 width=terrain_width,
                 Coordinate=[obstacle_coord[0], obstacle_coord[1]],
-                terrain=Func.TerrainType.obstacle,
+                terrain=Func.TerrainType.OBSTACLE,
                 resolution=Resolution
             )
             terrain_array.append(terrain_obj)
@@ -304,7 +313,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
                                 gi, gj = g_map
                                 if 0 <= gi < Resolution and 0 <= gj < Resolution:
                                     worldmap[gi][gj].setTerrainNum(
-                                        Func.TerrainType.floor)
+                                        Func.TerrainType.FLOOR)
                 else:
                     print(f"[{robot_name}] No valid terrain to update")
             print(f"[{robot_name}] Map lock released")

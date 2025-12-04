@@ -13,6 +13,10 @@ from enum import Enum
 import array
 import math
 import heapq
+import logging
+
+# Configure module logger
+logger = logging.getLogger(__name__)
 
 
 def process_vision_Sensor_RBG(sim: Any, sensor_name: str) -> Tuple[NDArray[np.uint8], Tuple[int, int]]:
@@ -297,7 +301,7 @@ def createMap_withResolution(Resolution: int, world_size: float = 10.0) -> NDArr
             Map[i][j] = terrain(
                 width=0,
                 Coordinate=Convert_map_to_world(i, j, R, Resolution),
-                terrain=TerrainType.floor,
+                terrain=TerrainType.FLOOR,
                 resolution=Resolution
             )
 
@@ -310,11 +314,11 @@ Classes , obstacle , terrain and interupt interface
 
 
 class TerrainType(Enum):
-    floor = 0
-    grass = 1
-    Sand = 2
-    water = 3
-    obstacle = 4
+    FLOOR = 0
+    GRASS = 1
+    SAND = 2
+    WATER = 3
+    OBSTACLE = 4
 
 
 class terrain():
@@ -345,15 +349,15 @@ class terrain():
 
     def getTerrainCost(self):
         match self.terrain:
-            case TerrainType.floor:
+            case TerrainType.FLOOR:
                 return 0
-            case TerrainType.grass:
+            case TerrainType.GRASS:
                 return 2
-            case TerrainType.Sand:
+            case TerrainType.SAND:
                 return 4
-            case TerrainType.water:
+            case TerrainType.WATER:
                 return 8
-            case TerrainType.obstacle:
+            case TerrainType.OBSTACLE:
                 return math.inf
         return 0
 
@@ -363,8 +367,11 @@ class terrain():
     def setTerrainNum(self, terrain: TerrainType):
         self.terrain = terrain
 
-    def get_world_coords(self):
-        return (self.i * self.resolution, self.j * self.resolution)
+    def get_world_coords(self) -> Tuple[float, float]:
+        """Returns the world coordinates stored in this terrain cell."""
+        if self.obstacleCoords is not None:
+            return (self.obstacleCoords[0], self.obstacleCoords[1])
+        return (0.0, 0.0)
 
 
 """
