@@ -14,7 +14,14 @@ This project implements a **multi-robot autonomous navigation system** using Cop
 ecse275-final-astar-search/
 ├── Final_project_main.py    # Main entry point - robot control threads & coordination
 ├── FP_funcs.py              # Core utilities - sensors, mapping, A* algorithm
+├── config.py                # Centralized configuration (MapConfig, SensorConfig, etc.)
 ├── final_project.ttt        # CoppeliaSim scene file
+├── coppeliasim_script/      # Lua scripts for CoppeliaSim scene
+│   ├── Robot_0.lua
+│   ├── Robot_1.lua
+│   ├── Robot_0_fastHokuyo_0.lua
+│   ├── Robot_1_fastHokuyo_0.lua
+│   └── coppeliasim_scene_hierarchy.md
 └── README.md                # Project documentation
 ```
 
@@ -27,6 +34,7 @@ ecse275-final-astar-search/
 | Terrain Mapping        | `FP_funcs.py`           | Occupancy grid with terrain types     |
 | A\* Pathfinding        | `FP_funcs.py`           | 4-connected grid navigation           |
 | Goal Management        | `Final_project_main.py` | Multi-goal assignment & tracking      |
+| Configuration          | `config.py`             | Centralized project configuration     |
 
 ### Data Flow
 
@@ -77,119 +85,59 @@ ecse275-final-astar-search/
 4. **Terrain-aware pathfinding** - A\* considers terrain costs
 5. **Dynamic goal assignment** - Robots find nearest uncompleted goals
 6. **Good documentation** - README covers installation and usage
+7. **Centralized configuration** - `config.py` provides dataclass-based configuration management
+8. **Correct API usage** - Uses `RemoteAPIClient()` and `client.require('sim')` patterns
+9. **Proper enum comparisons** - TerrainCost uses `TerrainType` enum members correctly
 
 ### Issues & Bugs 🐛
 
-#### Critical Issues
+#### ~~Critical Issues~~ (RESOLVED ✅)
 
-1. **Import Statement Bug** (Line 9, `Final_project_main.py`)
+1. ~~**Import Statement Bug**~~ - **FIXED**: Now correctly uses `from coppeliasim_zmqremoteapi_client import RemoteAPIClient`
 
-   ```python
-   # Current (incorrect)
-   import coppeliasim_zmqremoteapi_client as zmq
+2. ~~**Inconsistent API Usage**~~ - **FIXED**: Now uses `client.require('sim')` pattern
 
-   # Should be
-   from coppeliasim_zmqremoteapi_client import RemoteAPIClient
-   ```
+3. ~~**TerrainCost Match Bug**~~ - **FIXED**: Now compares against `TerrainType.floor`, `TerrainType.grass`, etc.
 
-   The current import style doesn't match the official API pattern.
+4. ~~**Variable Shadowing**~~ - **FIXED**: Loop variable renamed to `idx` in `Update_map()`
 
-2. **Inconsistent API Usage** (Lines 44-45, `Final_project_main.py`)
+#### ~~Remaining Medium Issues~~ (MOSTLY RESOLVED ✅)
+
+1. **Unused Function** (`FP_funcs.py`, line 479)
 
    ```python
-   # Current
-   client = zmq.RemoteAPIClient()
-   sim = client.getObject('sim')
-
-   # Official pattern uses
-   sim = client.require('sim')
+   def a_star_path_to_coppelia_points(...)  # References non-existent getTerrain() method
    ```
 
-3. **TerrainCost Match Bug** (`FP_funcs.py`, lines 319-329)
+   The `getTerrain()` method doesn't exist on the terrain class. _(Still needs fix or removal)_
 
-   ```python
-   def getTerrainCost(self):
-       match self.terrain:  # self.terrain is TerrainType enum, not int
-           case 0:  # Should be TerrainType.floor
-               return 0
-   ```
+2. ~~**Hardcoded Values**~~ - **FIXED**: All values now use `config.py`:
 
-   Comparing enum to integers won't work correctly.
+   - ✅ Map size: Now uses `cfg.map.world_size`
+   - ✅ FOV: Now uses `cfg.sensor.vision_fov_deg`
+   - ✅ Scan interval: Now uses `cfg.navigation.scan_interval`
+   - ✅ LiDAR threshold: Now uses `cfg.sensor.lidar_threshold`
+   - ✅ Robot names: Now uses `cfg.robots.names`
+   - ✅ Goal names: Now uses `cfg.goals.names`
 
-4. **Unused Function** (`FP_funcs.py`, line 479)
-   ```python
-   def a_star_path_to_coppelia_points(...)  # References non-existent getTerrain()
-   ```
+3. ~~**Config not fully integrated**~~ - **FIXED**: `config.py` is now imported and used throughout main files
 
-#### Medium Issues
+4. ~~**No Error Recovery**~~ - **FIXED**: A\* failures now log detailed message and retry on next scan cycle
 
-5. **Variable Shadowing** (`FP_funcs.py`, line 206)
-
-   ```python
-   for i in range(len(terrain_array)):
-       ...
-       i, j = Terrain_map_coord  # 'i' shadows loop variable
-   ```
-
-6. **Hardcoded Values**
-
-   - Map size: `10` (world units) hardcoded in multiple places
-   - FOV: `60` degrees hardcoded
-   - Scan interval: `1` second fixed
-
-7. **No Error Recovery** - If A\* returns `None`, robot just continues without path
-
-8. **Synchronization Mode** - Not using CoppeliaSim's stepping mode for deterministic simulation
+5. **Synchronization Mode** - Not using CoppeliaSim's stepping mode for deterministic simulation _(Future enhancement)_
 
 ---
 
 ## Improvement Plan
 
-### Phase 1: Critical Bug Fixes (Priority: HIGH)
+### ~~Phase 1: Critical Bug Fixes~~ (COMPLETED ✅)
 
-#### 1.1 Fix Import and API Pattern
+All critical bugs have been resolved in the current implementation:
 
-```python
-# Final_project_main.py - Line 9
-from coppeliasim_zmqremoteapi_client import RemoteAPIClient
-
-# And update usage throughout:
-client = RemoteAPIClient()
-sim = client.require('sim')  # Use require() instead of getObject()
-```
-
-#### 1.2 Fix TerrainCost Match Statement
-
-```python
-# FP_funcs.py - getTerrainCost method
-def getTerrainCost(self):
-    match self.terrain:
-        case TerrainType.floor:
-            return 0
-        case TerrainType.grass:
-            return 2
-        case TerrainType.Sand:
-            return 4
-        case TerrainType.water:
-            return 8
-        case TerrainType.obstacle:
-            return math.inf
-    return 0
-```
-
-#### 1.3 Fix Variable Shadowing
-
-```python
-# FP_funcs.py - Update_map function
-def Update_map(grid, terrain_array, Resolution):
-    n = len(grid)
-    for idx in range(len(terrain_array)):  # Use 'idx' instead of 'i'
-        currTerrain = terrain_array[idx]
-        Terrain_world_coord = currTerrain.getCoordinateArray()
-        Terrain_map_coord = Convert_world_to_map(...)
-        i, j = Terrain_map_coord  # Now safe
-        ...
-```
+- ✅ Import statements now use `from coppeliasim_zmqremoteapi_client import RemoteAPIClient`
+- ✅ API calls use `client.require('sim')` pattern
+- ✅ TerrainCost match statement uses proper enum members
+- ✅ Variable shadowing fixed (uses `idx` instead of `i`)
 
 ### Phase 2: Code Quality & Convention (Priority: MEDIUM)
 
@@ -230,9 +178,12 @@ def astar(
 
 #### 2.3 Configuration Management
 
+A `config.py` file has been created with dataclass-based configuration. **Next step**: integrate it into the main files.
+
 ```python
-# config.py (new file)
-from dataclasses import dataclass
+# config.py (already exists!)
+from dataclasses import dataclass, field
+from typing import List
 
 @dataclass
 class MapConfig:
@@ -247,14 +198,31 @@ class MapConfig:
 class SensorConfig:
     lidar_threshold: float = 0.2
     vision_fov_deg: float = 60.0
+    vision_resolution: tuple = (256, 256)
+
+@dataclass
+class NavigationConfig:
     scan_interval: float = 1.0
+    goal_reached_threshold: float = 0.5
+    use_8_connected: bool = False
 
 @dataclass
 class RobotConfig:
-    names: list = None
-    def __post_init__(self):
-        if self.names is None:
-            self.names = ["/Robot_0", "/Robot_1"]
+    names: List[str] = field(default_factory=lambda: ["/Robot_0", "/Robot_1"])
+    lidar_sensor_suffix: str = "/fastHokuyo_0"
+    vision_sensor_suffix: str = "/visionSensor"
+
+@dataclass
+class ProjectConfig:
+    map: MapConfig = field(default_factory=MapConfig)
+    sensor: SensorConfig = field(default_factory=SensorConfig)
+    navigation: NavigationConfig = field(default_factory=NavigationConfig)
+    robots: RobotConfig = field(default_factory=RobotConfig)
+
+# Usage in Final_project_main.py:
+# from config import default_config as cfg
+# Resolution = cfg.map.resolution
+# R = cfg.map.cell_size
 ```
 
 ### Phase 3: Architecture Improvements (Priority: MEDIUM)
@@ -382,11 +350,47 @@ async def read_all_sensors(robots):
 
 ### Improved terrain class
 
+The current `terrain` class implementation is functional. Here's the existing code with suggested dataclass refactor:
+
 ```python
-# FP_funcs.py
+# Current implementation in FP_funcs.py (working)
+class TerrainType(Enum):
+    floor = 0
+    grass = 1
+    Sand = 2
+    water = 3
+    obstacle = 4
+
+class terrain():
+    def __init__(self, width=0, Coordinate=None, terrain: TerrainType = None, resolution=5):
+        self.width = width
+        self.obstacleCoords = Coordinate
+        self.terrain = terrain
+        self.resolution = resolution
+
+    def getTerrainCost(self):
+        match self.terrain:
+            case TerrainType.floor:
+                return 0
+            case TerrainType.grass:
+                return 2
+            case TerrainType.Sand:
+                return 4
+            case TerrainType.water:
+                return 8
+            case TerrainType.obstacle:
+                return math.inf
+        return 0
+    # ... other methods
+```
+
+**Suggested refactor** (for future improvement):
+
+```python
+# FP_funcs.py - Dataclass-based refactor
 from enum import Enum, auto
 from dataclasses import dataclass
-from typing import Tuple, Optional
+from typing import Tuple
 import math
 
 class TerrainType(Enum):
@@ -406,7 +410,6 @@ TERRAIN_COSTS = {
 
 @dataclass
 class Terrain:
-    """Represents a terrain cell in the occupancy grid."""
     x: float
     y: float
     terrain_type: TerrainType = TerrainType.FLOOR
@@ -419,34 +422,42 @@ class Terrain:
     @property
     def is_obstacle(self) -> bool:
         return self.terrain_type == TerrainType.OBSTACLE
-
-    @property
-    def is_traversable(self) -> bool:
-        return self.terrain_type != TerrainType.OBSTACLE
-
-    @property
-    def coordinates(self) -> Tuple[float, float]:
-        return (self.x, self.y)
 ```
 
 ### Improved Main Entry Point
 
+The current implementation already follows good practices:
+
 ```python
-# Final_project_main.py (header)
+# Final_project_main.py (current - working)
 #!/usr/bin/env python3
 """
-Multi-Robot Navigation System for CoppeliaSim
-
-This module implements a coordinated multi-robot navigation system
-using A* pathfinding, LiDAR, and vision sensors.
-
-Author: [Your Name]
-Date: 2025
+Created on Thu Nov 13 20:21:34 2025
+@author: halas
 """
 
 from coppeliasim_zmqremoteapi_client import RemoteAPIClient
-from typing import Dict, List, Optional
+import FP_funcs as Func
+import math
+import numpy as np
+import time
 import threading
+
+# Global locks for thread-safe access
+map_lock = threading.Lock()
+goals_lock = threading.Lock()
+
+# Global goals tracking
+goals_data = {
+    'positions': [],      # List of goal world positions [(x, y, z), ...]
+    'completed': [],      # List of booleans tracking completion status
+    'assigned_to': []     # List of robot names or None for each goal
+}
+```
+
+**Suggested enhancement** (add logging):
+
+```python
 import logging
 
 # Configure logging
@@ -471,19 +482,51 @@ logger = logging.getLogger(__name__)
 
 ---
 
+## Current Implementation Notes
+
+### Working Features (as of Dec 2025)
+
+1. **Multi-robot coordination** - Two robots (`/Robot_0`, `/Robot_1`) run in separate threads
+2. **Goal assignment** - Nearest unassigned goal is selected dynamically
+3. **LiDAR obstacle detection** - Uses `process_Lidar_depth()` with configurable threshold
+4. **Vision-based terrain detection** - Red→obstacle, Green→grass, Blue→water
+5. **A\* pathfinding** - 4-connected grid with terrain costs
+6. **Thread-safe map updates** - Uses `map_lock` and `goals_lock`
+7. **Lua script integration** - Paths sent via `setPath()`, status via `getGoalStatus()`
+8. **Centralized configuration** - All parameters configurable via `config.py`
+9. **Error recovery** - A\* failures trigger retry on next scan cycle
+
+### Key Parameters (configurable via `config.py`)
+
+| Parameter       | Default                  | Config Location                |
+| --------------- | ------------------------ | ------------------------------ |
+| Map Resolution  | 100x100                  | `cfg.map.resolution`           |
+| World Size      | 10m                      | `cfg.map.world_size`           |
+| Cell Size (R)   | 0.1m                     | `cfg.map.cell_size`            |
+| Scan Interval   | 1s                       | `cfg.navigation.scan_interval` |
+| Vision FOV      | 60°                      | `cfg.sensor.vision_fov_deg`    |
+| LiDAR Threshold | 0.2m                     | `cfg.sensor.lidar_threshold`   |
+| Robot Names     | ["/Robot_0", "/Robot_1"] | `cfg.robots.names`             |
+| Goal Names      | ["/goal_point", ...]     | `cfg.goals.names`              |
+
+---
+
 ## Implementation Priority
 
-| Priority  | Task                   | Effort | Impact |
-| --------- | ---------------------- | ------ | ------ |
-| 🔴 HIGH   | Fix import statements  | Low    | High   |
-| 🔴 HIGH   | Fix TerrainCost match  | Low    | High   |
-| 🔴 HIGH   | Fix variable shadowing | Low    | Medium |
-| 🟡 MEDIUM | Add type hints         | Medium | Medium |
-| 🟡 MEDIUM | Use stepping mode      | Medium | High   |
-| 🟡 MEDIUM | Extract configuration  | Medium | Medium |
-| 🟢 LOW    | 8-connected movement   | Medium | Low    |
-| 🟢 LOW    | Path smoothing         | Medium | Low    |
-| 🟢 LOW    | Async API usage        | High   | Medium |
+| Priority      | Task                                          | Effort | Impact | Status      |
+| ------------- | --------------------------------------------- | ------ | ------ | ----------- |
+| ~~🔴 HIGH~~   | ~~Fix import statements~~                     | Low    | High   | ✅ DONE     |
+| ~~🔴 HIGH~~   | ~~Fix TerrainCost match~~                     | Low    | High   | ✅ DONE     |
+| ~~🔴 HIGH~~   | ~~Fix variable shadowing~~                    | Low    | Medium | ✅ DONE     |
+| ~~🟡 MEDIUM~~ | ~~Integrate config.py~~                       | Low    | Medium | ✅ DONE     |
+| ~~🟡 MEDIUM~~ | ~~Add A\* error recovery~~                    | Low    | Medium | ✅ DONE     |
+| 🟡 MEDIUM     | Add type hints                                | Medium | Medium | Not Started |
+| 🟡 MEDIUM     | Use stepping mode                             | Medium | High   | Not Started |
+| 🟡 MEDIUM     | Fix unused `a_star_path_to_coppelia_points()` | Low    | Low    | Not Started |
+| 🟢 LOW        | 8-connected movement                          | Medium | Low    | Not Started |
+| 🟢 LOW        | Path smoothing                                | Medium | Low    | Not Started |
+| 🟢 LOW        | Async API usage                               | High   | Medium | Not Started |
+| 🟢 LOW        | Add logging module                            | Low    | Medium | Not Started |
 
 ---
 

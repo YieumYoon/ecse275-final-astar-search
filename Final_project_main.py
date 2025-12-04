@@ -7,6 +7,7 @@ Created on Thu Nov 13 20:21:34 2025
 
 
 from coppeliasim_zmqremoteapi_client import RemoteAPIClient
+from config import default_config as cfg
 import FP_funcs as Func
 import math
 import numpy as np
@@ -165,10 +166,10 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
         print(
             f"[{robot_name}] Current Goal {current_goal_index}: World {goal_world[:2]}, Map {goal_map}")
 
-        # 1. Scan terrain using LiDAR
+        # 1. Scan terrain using LiDAR (threshold from config)
         print(f"[{robot_name}] Scanning with LiDAR...")
         segmented_points = Func.process_Lidar_depth(
-            sim, f'{robot_name}/fastHokuyo_0', 0.2)
+            sim, f'{robot_name}/fastHokuyo_0', cfg.sensor.lidar_threshold)
 
         # Get LiDAR sensor matrix for coordinate transformation
         sensor_matrix = sim.getObjectMatrix(lidar_handle, sim.handle_world)
@@ -198,8 +199,8 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
         depth_map, _ = Func.process_vision_sensor_depth(
             sim, f"{robot_name[1:]}/visionSensor")
 
-        # 5. Detect terrain types by color
-        fov_deg = 60
+        # 5. Detect terrain types by color (FOV from config)
+        fov_deg = cfg.sensor.vision_fov_deg
         f = fov_deg
         terrain_detections = []
 
@@ -288,7 +289,8 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
                             f"[{robot_name}] Warning: Terrain at ({i}, {j}) is out of bounds, skipping")
 
                 if valid_terrain:
-                    Func.Update_map(worldmap, valid_terrain, Resolution)
+                    Func.Update_map(worldmap, valid_terrain,
+                                    Resolution, cfg.map.world_size)
                     print(
                         f"[{robot_name}] Map updated with {len(valid_terrain)} terrain objects")
 
@@ -339,7 +341,12 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             print(f"[{robot_name}] Path sent to robot!")
             print(f"[{robot_name}] First 3 waypoints: {world_path[:3]}")
         else:
-            print(f"[{robot_name}] ERROR: No path found!")
+            # Error recovery: No path found - wait and retry on next scan
+            print(
+                f"[{robot_name}] ERROR: No path found to goal {current_goal_index}!")
+            print(f"[{robot_name}] Will retry pathfinding on next scan cycle...")
+            # Robot continues moving with previous path (if any) or stays idle
+            # Next scan will update the map and attempt pathfinding again
 
         print(f"[{robot_name}] Scan complete. Waiting {scan_interval}s...")
         time.sleep(scan_interval)
@@ -356,19 +363,18 @@ if __name__ == "__main__":
     sim = client.require('sim')
     print("Connection established!")
 
-    # 2. Initialize the map with resolution
-    Resolution = 100  # the resolution of the map
-    R = 10/Resolution  # width of each discrete square
+    # 2. Initialize the map with resolution (from config)
+    Resolution = cfg.map.resolution  # the resolution of the map
+    R = cfg.map.cell_size  # width of each discrete square
     print(f"\nInitializing map with resolution: {Resolution}x{Resolution}")
     print(f"Cell size (R): {R}")
-    worldmap = Func.createMap_withResolution(Resolution)
+    print(f"World size: {cfg.map.world_size}m")
+    worldmap = Func.createMap_withResolution(Resolution, cfg.map.world_size)
     print("Map initialized!")
 
-    # 3. Get goal positions and initialize tracking
+    # 3. Get goal positions and initialize tracking (from config)
     print("\n--- Initializing Goals ---")
-    # Add more goal names here like ["/goal_point", "/goal_point_2", "/goal_point_3"]
-    goal_names = ["/goal_point", "/goal_point_1",
-                  "/goal_point_2", "/goal_point_3", "/goal_point_4"]
+    goal_names = cfg.goals.names
 
     for goal_name in goal_names:
         try:
@@ -387,8 +393,8 @@ if __name__ == "__main__":
         print("ERROR: No goals found! Exiting...")
         exit(1)
 
-    # 4. Initialize robots (supports 1, 2, or more robots)
-    robot_names = ["/Robot_0", "/Robot_1"]   # add more if needed
+    # 4. Initialize robots (from config)
+    robot_names = cfg.robots.names
 
     robots = {}
 
@@ -425,7 +431,8 @@ if __name__ == "__main__":
     print(f"Launching {len(robots)} robot threads")
     print("===========================================")
 
-    scan_interval = 1  # seconds between scans for each robot
+    # seconds between scans for each robot
+    scan_interval = cfg.navigation.scan_interval
 
     # Create and start a thread for each robot
     threads = []

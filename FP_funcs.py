@@ -207,17 +207,18 @@ and takes a N length array of terrain objects to update the map.
 '''
 
 
-def Update_map(grid, terrain_array, Resolution):
+def Update_map(grid, terrain_array, Resolution, world_size=10.0):
     n = len(grid)
+    R = world_size / Resolution
     for idx in range(len(terrain_array)):
         currTerrain = terrain_array[idx]
         Terrain_world_coord = currTerrain.getCoordinateArray()
         Terrain_map_coord = Convert_world_to_map(
-            Terrain_world_coord[0], Terrain_world_coord[1], 10/Resolution, Resolution)
+            Terrain_world_coord[0], Terrain_world_coord[1], R, Resolution)
         # Place terrain at its position
         i, j = Terrain_map_coord
         grid[i][j] = currTerrain
-        get_cells_to_fill(currTerrain, Resolution, i, j, grid)
+        get_cells_to_fill(currTerrain, Resolution, i, j, grid, world_size)
 
 
 '''
@@ -227,8 +228,8 @@ function not eleborated properly since it is a backend use only code.
 '''
 
 
-def get_cells_to_fill(terrain_obj, Resolution, i, j, grid):
-    R = 10/Resolution
+def get_cells_to_fill(terrain_obj, Resolution, i, j, grid, world_size=10.0):
+    R = world_size / Resolution
     width = terrain_obj.getWidth()
     if width <= R:
         return
@@ -285,9 +286,9 @@ The value at each coordinate is the cost to come for that coordinate
 """
 
 
-def createMap_withResolution(Resolution):
+def createMap_withResolution(Resolution, world_size=10.0):
     Map = np.zeros((Resolution, Resolution), dtype=object)
-    R = 10/Resolution
+    R = world_size / Resolution
     for i in range(0, Resolution):
         for j in range(0, Resolution):
             Map[i][j] = terrain(
