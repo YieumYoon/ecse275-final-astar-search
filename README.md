@@ -42,6 +42,7 @@ The final deliverable is a team of differential-drive robots that collaborativel
 ![LiDAR Sensing](Lidar.jpg)
 
 - **Vision Sensor Processing**
+
   - RGB image capture and processing (256×256 resolution)
   - Depth map extraction and conversion
   - Color-based object detection (red, green, blue)
@@ -53,10 +54,10 @@ The final deliverable is a team of differential-drive robots that collaborativel
   - Multiple terrain types (floor, grass, sand, water, obstacle)
   - Terrain cost assignment for pathfinding
   - Real-time map updates based on sensor data
- 
+
 ![Robot Environment](Map.jpg)
 
-- **A* Pathfinding**
+- **A\* Pathfinding**
   - 4-connected grid navigation
   - Terrain-aware cost function
   - Euclidean distance heuristic
@@ -80,10 +81,11 @@ Version_8/
 #### Dependencies
 
 - **Python Libraries:**
+
   - `numpy` - Numerical computations and array operations
   - `matplotlib` - Image visualization
   - `math` - Mathematical operations
-  - `heapq` - Priority queue for A* algorithm
+  - `heapq` - Priority queue for A\* algorithm
 
 - **CoppeliaSim:**
   - `coppeliasim_zmqremoteapi_client` - ZMQ Remote API for CoppeliaSim communication
@@ -91,15 +93,18 @@ Version_8/
 #### Installation
 
 1. Install Python dependencies:
+
 ```bash
 pip install numpy matplotlib
 ```
 
 2. Install CoppeliaSim and the ZMQ Remote API:
+
    - Download CoppeliaSim from [https://www.coppeliarobotics.com/](https://www.coppeliarobotics.com/)
    - Install the ZMQ Remote API client
 
 3. Activate your conda environment:
+
 ```bash
 conda activate ecse275env
 ```
@@ -109,6 +114,7 @@ conda activate ecse275env
 1. **Start CoppeliaSim** and load the scene file `final_project (1).ttt`
 
 2. **Run the main script:**
+
 ```bash
 python Final_project_main.py
 ```
@@ -133,6 +139,7 @@ python Final_project_main.py
 #### Function Library (`FP_funcs.py`)
 
 #### Vision Processing Functions
+
 - `process_vision_Sensor_RBG()` - Extract RGB images
 - `process_vision_sensor_depth()` - Extract depth maps
 - `compute_pos_from_pix()` - Convert pixel coordinates to 3D positions
@@ -141,23 +148,27 @@ python Final_project_main.py
 - `depth_from_rgb_mask()` - Extract depth values from masked regions
 
 #### LiDAR Processing Functions
+
 - `process_Lidar_depth()` - Process LiDAR measurements
 - `segment_lidar()` - Segment point cloud based on distance threshold
 - `transform_point()` - Transform points using transformation matrix
 
 #### Mapping Functions
+
 - `createMap_withResolution()` - Initialize terrain map
 - `Update_map()` - Update map with detected terrain objects
 - `Convert_world_to_map()` - World to map coordinate conversion
 - `Convert_map_to_world()` - Map to world coordinate conversion
 
 #### Pathfinding Functions
-- `astar()` - A* pathfinding algorithm implementation
+
+- `astar()` - A\* pathfinding algorithm implementation
 - `heuristic()` - Euclidean distance calculation
 - `get_neighbors()` - Get valid neighboring cells
 - `a_star_path_to_coppelia_points()` - Convert path to CoppeliaSim format
 
 #### Terrain System
+
 - `terrain` class - Represents map cells with terrain properties
 - `TerrainType` enum - Defines terrain types and costs
   - Floor: cost 0
@@ -167,37 +178,44 @@ python Final_project_main.py
   - Obstacle: cost ∞
 
 #### Map Resolution
+
 Default resolution is 100×100 cells covering a 10×10 meter world:
+
 ```python
 Resolution = 100
 R = 10/Resolution  # Cell size = 0.1m
 ```
 
 #### Sensor Parameters
+
 - **Vision Sensor:** 256×256 pixels, 60° FOV
 - **LiDAR:** FastHokuyo with segmentation threshold of 0.2m
 
 #### Color Detection
+
 Adjust color threshold in `mask_color()` function (default: 20-point margin)
 
 #### Algorithms
 
-#### A* Pathfinding
+#### A\* Pathfinding
+
 - **Graph:** 4-connected grid
 - **Cost Function:** g(n) = movement_cost + terrain_cost
 - **Heuristic:** h(n) = Euclidean distance to goal
 - **Priority:** f(n) = g(n) + h(n)
 
 #### LiDAR Segmentation
+
 Groups consecutive points if distance < threshold, separating distinct objects
 
 ### Testing
 
 1. Variable Field-of-View (FOV)
-We conducted three trials under two different camera field-of-view settings: 60° and 120°. In each trial, we recorded the time taken to reach the first goal and the time taken to reach all goals. This data allowed us to quantify how FOV impacts navigation efficiency and overall system performance.
+   We conducted three trials under two different camera field-of-view settings: 60° and 120°. In each trial, we recorded the time taken to reach the first goal and the time taken to reach all goals. This data allowed us to quantify how FOV impacts navigation efficiency and overall system performance.
 
 2. Variable Map Resolution
-
+   We tested how map resolution affects navigation performance and A\* pathfinding reliability. Resolution determines the cell size of the occupancy grid—higher resolutions create finer grids with smaller cells. While finer grids can represent obstacles more precisely, extremely high resolutions (like 500) cause the cell size to become smaller than the robot's physical dimensions, leading to path tracking errors and collisions.
+   (here)
 
 ### Summary Flow Chart
 
@@ -238,18 +256,18 @@ flowchart TB
 
     %% Connections
     ZMQ <-->|"Robot positions,<br/>sensor data"| CoppeliaSim
-    
+
     LiDAR -->|"Point cloud"| LiDARProc
     Vision -->|"RGB + Depth"| VisionProc
-    
+
     LiDARProc -->|"Obstacle locations"| CoordTrans
     VisionProc -->|"Terrain colors"| CoordTrans
     CoordTrans -->|"World coordinates"| TerrainMap
-    
+
     TerrainMap -->|"Updates"| SharedMap
     SharedMap -->|"Grid + costs"| Start
     GoalTracker -->|"Target position"| Start
-    
+
     %% A* internal flow
     Start --> OpenSet
     OpenSet --> GetNeighbors
@@ -257,7 +275,7 @@ flowchart TB
     CalcCost --> CheckGoal
     CheckGoal -->|"No"| OpenSet
     CheckGoal -->|"Yes"| PathFound
-    
+
     PathFound -->|"Waypoint path"| LuaCtrl
     LuaCtrl -->|"Motor commands"| Robots
     LuaCtrl -->|"Goal reached"| GoalTracker
@@ -265,25 +283,25 @@ flowchart TB
 
 #### Key Data Flows:
 
-| Source | Destination | Data/Message |
-|--------|-------------|--------------|
-| LiDAR Sensor | LiDAR Processing | 3D point cloud (x, y, z) |
-| Vision Sensor | Vision Processing | RGB image + depth buffer |
-| Sensor Processing | Terrain Mapping | World coordinates of obstacles & terrain |
-| Terrain Mapping | A* Pathfinding | Grid map with terrain costs |
-| A* Pathfinding | Lua Controller | Waypoint path [(x, y), ...] |
-| Lua Controller | Goal Tracker | Goal completion status |
+| Source            | Destination       | Data/Message                             |
+| ----------------- | ----------------- | ---------------------------------------- |
+| LiDAR Sensor      | LiDAR Processing  | 3D point cloud (x, y, z)                 |
+| Vision Sensor     | Vision Processing | RGB image + depth buffer                 |
+| Sensor Processing | Terrain Mapping   | World coordinates of obstacles & terrain |
+| Terrain Mapping   | A\* Pathfinding   | Grid map with terrain costs              |
+| A\* Pathfinding   | Lua Controller    | Waypoint path [(x, y), ...]              |
+| Lua Controller    | Goal Tracker      | Goal completion status                   |
 
-#### A* Pathfinding Details:
+#### A\* Pathfinding Details:
 
-| Component | Description |
-|-----------|-------------|
-| **Priority Queue** | Min-heap ordered by f-cost, stores nodes to explore |
-| **g-cost** | Actual cost from start: movement cost (1.0 cardinal, √2 diagonal) + terrain cost |
-| **h-cost** | Heuristic: Euclidean distance to goal |
-| **f-cost** | Total estimated cost: f = g + h |
-| **Neighbors** | 4-connected (up/down/left/right) or 8-connected (includes diagonals) |
-| **Terrain Costs** | Floor: 0, Grass: 2, Sand: 4, Water: 8, Obstacle: ∞ |
+| Component          | Description                                                                      |
+| ------------------ | -------------------------------------------------------------------------------- |
+| **Priority Queue** | Min-heap ordered by f-cost, stores nodes to explore                              |
+| **g-cost**         | Actual cost from start: movement cost (1.0 cardinal, √2 diagonal) + terrain cost |
+| **h-cost**         | Heuristic: Euclidean distance to goal                                            |
+| **f-cost**         | Total estimated cost: f = g + h                                                  |
+| **Neighbors**      | 4-connected (up/down/left/right) or 8-connected (includes diagonals)             |
+| **Terrain Costs**  | Floor: 0, Grass: 2, Sand: 4, Water: 8, Obstacle: ∞                               |
 
 ## Results
 
@@ -295,8 +313,8 @@ flowchart TB
 
 FOV = 60
 
-| Test |  Time to First Goal (s)| Time to All Goals (s) |
-|------|------------------------|-----------------------|
+| Test | Time to First Goal (s) | Time to All Goals (s) |
+| ---- | ---------------------- | --------------------- |
 | 1    | 44.04                  | 63.4                  |
 | 2    | 43.07                  | 64.5                  |
 | 3    | 45.23                  | 62.5                  |
@@ -304,21 +322,20 @@ FOV = 60
 FOV = 120
 
 | Test | Time to First Goal (s) | Time to All Goals (s) |
-|------|------------------------|-----------------------|
+| ---- | ---------------------- | --------------------- |
 | 1    | 43.24                  | 72.97                 |
 | 2    | 40.75                  | 70.47                 |
 | 3    | 43.64                  | 72.54                 |
 
-
 2. Variable Map Resolution
 
-| Resolution | Cell Size | Grid Cells | Time |
-|------------|-----------|------------|------|
-| 25         | 0.4m      | 625        | 42 sec |
-| 50         | 0.2m      | 2,500      | 45 sec |
-| 100        | 0.1m      | 10,000     | 43 sec |
-| 150        | ~0.067m   | 22,500     | 42 sec |
-| 250        | 0.04m     | 62,500     | 43 sec |
+| Resolution | Cell Size | Grid Cells | Time             |
+| ---------- | --------- | ---------- | ---------------- |
+| 25         | 0.4m      | 625        | 42 sec           |
+| 50         | 0.2m      | 2,500      | 45 sec           |
+| 100        | 0.1m      | 10,000     | 43 sec           |
+| 150        | ~0.067m   | 22,500     | 42 sec           |
+| 250        | 0.04m     | 62,500     | 43 sec           |
 | 500        | 0.02m     | 250,000    | Failed to search |
 
 ### Success
@@ -328,16 +345,19 @@ Overall, our implementation was successful. The system is able to detect obstacl
 #### Troubleshooting
 
 #### Connection Issues
+
 - Ensure CoppeliaSim is running before executing the script
 - Verify ZMQ Remote API is properly installed
 - Check that scene contains required objects with correct names
 
 #### Coordinate System
+
 - All transformations use CoppeliaSim's 3×4 transformation matrices
 - World frame origin is at (0, 0, 0)
 - Map assumes world center at map center
 
 #### Pathfinding
+
 - Verify start and goal positions are not obstacles
 - Check map resolution matches world size
 - Ensure terrain costs are properly set
@@ -345,11 +365,13 @@ Overall, our implementation was successful. The system is able to detect obstacl
 ### Future Enhancements
 
 1. **Multi-Robot System**
+
    - Coordinate 3, 4, 5 robots
    - Dynamic task allocation
    - Shared map updates
 
 2. **Advanced Perception**
+
    - Real-time obstacle avoidance
    - Dynamic object tracking
    - Improved terrain classification
