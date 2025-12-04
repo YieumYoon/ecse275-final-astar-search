@@ -99,25 +99,24 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
         # ===========================================
 
         # Check if Lua controller says goal is reached
-        if current_goal_index is not None:
-            goal_reached = sim.callScriptFunction(
-                'getGoalStatus', script_handle)
+        goal_reached = sim.callScriptFunction(
+            'getGoalStatus', script_handle)
 
-            if goal_reached:
+        if goal_reached:
+            print(
+                f"[{robot_name}] *** LUA REPORTS GOAL {current_goal_index} REACHED! ***")
+
+            with goals_lock:
+                goal_world = goals_data['positions'][current_goal_index]
+                print(f"[{robot_name}] Goal was at: {goal_world[:2]}")
+                print(f"[{robot_name}] Robot is at: {robot_pos[:2]}")
+
+                # Mark goal as completed
+                goals_data['completed'][current_goal_index] = True
+                goals_data['assigned_to'][current_goal_index] = None
+                current_goal_index = None
                 print(
-                    f"[{robot_name}] *** LUA REPORTS GOAL {current_goal_index} REACHED! ***")
-
-                with goals_lock:
-                    goal_world = goals_data['positions'][current_goal_index]
-                    print(f"[{robot_name}] Goal was at: {goal_world[:2]}")
-                    print(f"[{robot_name}] Robot is at: {robot_pos[:2]}")
-
-                    # Mark goal as completed
-                    goals_data['completed'][current_goal_index] = True
-                    goals_data['assigned_to'][current_goal_index] = None
-                    current_goal_index = None
-                    print(
-                        f"[{robot_name}] Goal marked as completed, will find next goal...")
+                    f"[{robot_name}] Goal marked as completed, will find next goal...")
 
         # ===========================================
         # GOAL ASSIGNMENT LOGIC
@@ -503,3 +502,4 @@ if __name__ == "__main__":
         thread.join(timeout=2.0)
 
     print("Shutdown complete.")
+
