@@ -5,8 +5,8 @@ Configuration module for Robot Navigation System
 This module centralizes all configurable parameters for the multi-robot
 navigation system. Modify values here instead of hardcoding in main files.
 
-Author: [Your Name]
-Date: 2025
+Author: Junsu Lee
+Date: Dec 3, 2025
 """
 
 from dataclasses import dataclass, field

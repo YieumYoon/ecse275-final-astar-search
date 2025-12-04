@@ -363,6 +363,11 @@ if __name__ == "__main__":
     sim = client.require('sim')
     print("Connection established!")
 
+    # Enable stepping mode for synchronized, deterministic simulation
+    # This ensures all robots see the same simulation state
+    sim.setStepping(True)
+    print("Stepping mode enabled for synchronized simulation")
+
     # 2. Initialize the map with resolution (from config)
     Resolution = cfg.map.resolution  # the resolution of the map
     R = cfg.map.cell_size  # width of each discrete square
@@ -449,9 +454,15 @@ if __name__ == "__main__":
         print(f"Thread started for {robot_name}")
         time.sleep(1.0)  # Longer delay to ensure clean startup
 
-    # Keep main thread alive
+    # Main loop: advance simulation and keep main thread alive
+    # The stepping mode ensures synchronized robot control
+    print("\nMain loop started - advancing simulation steps...")
     try:
         while True:
-            time.sleep(1)
+            # Advance simulation by one step
+            # This allows the physics engine to update all robot positions
+            sim.step()
+            time.sleep(0.05)  # ~20 steps per second
     except KeyboardInterrupt:
         print("\n\nShutting down...")
+        sim.setStepping(False)  # Disable stepping mode on exit
