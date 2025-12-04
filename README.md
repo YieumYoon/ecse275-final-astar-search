@@ -206,9 +206,25 @@ We conducted three trials under two different camera field-of-view settings: 60Â
 
 ![alt text](275video_720p.gif)
 
-![FOV Data Table](DataTable_FOV.jpg)
-
 ### Data
+
+1. Variable Field-of-View (FOV)
+
+FOV = 60
+
+| Test |  Time to First Goal (s)| Time to All Goals (s) |
+|------|------------------------|-----------------------|
+| 1    | 44.04                  | 63.4                  |
+| 2    | 43.07                  | 64.5                  |
+| 3    | 45.23                  | 62.5                  |
+
+FOV = 120
+
+| Test | Time to First Goal (s) | Time to All Goals (s) |
+|------|------------------------|-----------------------|
+| 1    | 43.24                  | 72.97                 |
+| 2    | 40.75                  | 70.47                 |
+| 3    | 43.64                  | 72.54                 |
 
 ### Success
 
