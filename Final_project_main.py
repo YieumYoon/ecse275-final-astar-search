@@ -239,7 +239,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             red_world_coord = Func.transform_point(
                 visionSensor_matrix, camera_frame_coord)
             terrain_detections.append(
-                ("red", red_world_coord, Func.TerrainType.OBSTACLE))
+                ("red", red_world_coord, Func.TerrainType.SAND))
 
         # Green terrain detection
         mask_green = Func.mask_color(imgL, "green")
@@ -502,4 +502,5 @@ if __name__ == "__main__":
         thread.join(timeout=2.0)
 
     print("Shutdown complete.")
+
 
