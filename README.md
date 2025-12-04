@@ -224,4 +224,7 @@ The current version contains all necessary interface tools for:
 
 ## Authors
 
-- halas (Primary Developer)
+- Halasyam Visvanathan (Primary Developer - A Star Path Planning)
+- Amos Langsner (Primary Developer - Vision)
+- Abigail Todd (Primary Developer - Map and Depth)
+- Junsu Lee (Primary Developer - Integration)
