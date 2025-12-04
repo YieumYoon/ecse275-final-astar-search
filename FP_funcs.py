@@ -418,33 +418,92 @@ class terrain():
 
 
 """
-A* Algorithm Implementation (4-connected)
+A* Algorithm Implementation (supports 4-connected and 8-connected)
 ------------------------------------------------
 Heuristic: Euclidean distance between current cell and goal.
 """
+
+# Diagonal movement cost (sqrt(2))
+DIAGONAL_COST = math.sqrt(2)
 
 
 def heuristic(a: Tuple[int, int], b: Tuple[int, int]) -> float:
     return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
 
-def get_neighbors(pos: Tuple[int, int], grid_size: int) -> List[Tuple[int, int]]:
+def get_neighbors_4connected(pos: Tuple[int, int], grid_size: int) -> List[Tuple[Tuple[int, int], float]]:
+    """
+    Get 4-connected neighbors (up, down, left, right).
+
+    Args:
+        pos: Current position (i, j)
+        grid_size: Size of the grid (n)
+
+    Returns:
+        List of ((neighbor_i, neighbor_j), movement_cost) tuples
+    """
     i, j = pos
     n = grid_size
     neighbors = []
     # 4-connected neighborhood (up, down, left, right)
     if i > 0:
-        neighbors.append((i - 1, j))
+        neighbors.append(((i - 1, j), 1.0))
     if i < n - 1:
-        neighbors.append((i + 1, j))
+        neighbors.append(((i + 1, j), 1.0))
     if j > 0:
-        neighbors.append((i, j - 1))
+        neighbors.append(((i, j - 1), 1.0))
     if j < n - 1:
-        neighbors.append((i, j + 1))
+        neighbors.append(((i, j + 1), 1.0))
     return neighbors
 
 
-def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: float, Resolution: int) -> Optional[List[Tuple[int, int]]]:
+def get_neighbors_8connected(pos: Tuple[int, int], grid_size: int) -> List[Tuple[Tuple[int, int], float]]:
+    """
+    Get 8-connected neighbors including diagonals.
+
+    Args:
+        pos: Current position (i, j)
+        grid_size: Size of the grid (n)
+
+    Returns:
+        List of ((neighbor_i, neighbor_j), movement_cost) tuples
+        Diagonal moves have cost sqrt(2) ≈ 1.414
+    """
+    i, j = pos
+    n = grid_size
+    neighbors = []
+
+    for di in [-1, 0, 1]:
+        for dj in [-1, 0, 1]:
+            if di == 0 and dj == 0:
+                continue
+            ni, nj = i + di, j + dj
+            if 0 <= ni < n and 0 <= nj < n:
+                # Diagonal cost is sqrt(2), cardinal cost is 1.0
+                cost = DIAGONAL_COST if (di != 0 and dj != 0) else 1.0
+                neighbors.append(((ni, nj), cost))
+
+    return neighbors
+
+
+def get_neighbors(pos: Tuple[int, int], grid_size: int, use_8_connected: bool = False) -> List[Tuple[Tuple[int, int], float]]:
+    """
+    Get neighbors based on connectivity setting.
+
+    Args:
+        pos: Current position (i, j)
+        grid_size: Size of the grid (n)
+        use_8_connected: If True, include diagonal neighbors
+
+    Returns:
+        List of ((neighbor_i, neighbor_j), movement_cost) tuples
+    """
+    if use_8_connected:
+        return get_neighbors_8connected(pos, grid_size)
+    return get_neighbors_4connected(pos, grid_size)
+
+
+def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: float, Resolution: int, use_8_connected: bool = False) -> Optional[List[Tuple[int, int]]]:
     """
     A* pathfinding algorithm.
 
@@ -454,6 +513,7 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
         goal: World coordinates [x, y] or [x, y, z]
         R: Cell size (world_size / Resolution)
         Resolution: Grid resolution
+        use_8_connected: If True, allow diagonal movement (default: False)
 
     Returns:
         List of (i, j) map coordinates from start to goal, or None if no path.
@@ -497,7 +557,7 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
             path.append(start_map)
             return path[::-1]  # Reverse: start -> goal
 
-        for neighbor in get_neighbors(current, n):
+        for neighbor, move_cost in get_neighbors(current, n, use_8_connected):
             if neighbor in closed_set:
                 continue
 
@@ -507,10 +567,20 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
             if neighbor_cell.isObstacle():
                 continue
 
+            # For diagonal moves, check if path is blocked by adjacent obstacles
+            if use_8_connected and move_cost > 1.0:
+                di = neighbor[0] - current[0]
+                dj = neighbor[1] - current[1]
+                # Check both adjacent cells for diagonal movement
+                adj1 = grid[current[0] + di][current[1]]
+                adj2 = grid[current[0]][current[1] + dj]
+                if adj1.isObstacle() or adj2.isObstacle():
+                    continue  # Can't cut corners
+
             terrain_cost = neighbor_cell.getTerrainCost()
 
-            # Cost = previous cost + 1 (movement) + terrain penalty
-            tentative_g = g_score[current] + 1 + terrain_cost
+            # Cost = previous cost + movement cost + terrain penalty
+            tentative_g = g_score[current] + move_cost + terrain_cost
 
             if neighbor not in g_score or tentative_g < g_score[neighbor]:
                 g_score[neighbor] = tentative_g
@@ -520,7 +590,155 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
 
     # At the end of astar, before "return None"
     print(f"A* exhausted. Explored {len(closed_set)} cells")
-    print(f"Closed set: {closed_set}")
     print(f"Start map: {start_map}, Goal map: {goal_map}")
 
     return None  # No path found
+
+
+# =============================================================================
+# Path Smoothing Functions
+# =============================================================================
+
+def has_line_of_sight(p1: Tuple[int, int], p2: Tuple[int, int], grid: NDArray[np.object_]) -> bool:
+    """
+    Check if there's a clear line of sight between two grid cells using Bresenham's line algorithm.
+
+    Args:
+        p1: Start position (i, j)
+        p2: End position (i, j)
+        grid: 2D numpy array of terrain objects
+
+    Returns:
+        True if no obstacles block the line, False otherwise
+    """
+    i0, j0 = p1
+    i1, j1 = p2
+
+    di = abs(i1 - i0)
+    dj = abs(j1 - j0)
+
+    i_step = 1 if i0 < i1 else -1
+    j_step = 1 if j0 < j1 else -1
+
+    error = di - dj
+
+    i, j = i0, j0
+
+    while True:
+        # Check if current cell is an obstacle (skip start and end)
+        if (i, j) != p1 and (i, j) != p2:
+            if grid[i][j].isObstacle():
+                return False
+
+        if i == i1 and j == j1:
+            break
+
+        e2 = 2 * error
+
+        if e2 > -dj:
+            error -= dj
+            i += i_step
+
+        if e2 < di:
+            error += di
+            j += j_step
+
+    return True
+
+
+def smooth_path(path: List[Tuple[int, int]], grid: NDArray[np.object_]) -> List[Tuple[int, int]]:
+    """
+    Remove unnecessary waypoints from a path using line-of-sight checks.
+    This reduces the number of waypoints while maintaining a valid path.
+
+    Args:
+        path: List of (i, j) map coordinates from A*
+        grid: 2D numpy array of terrain objects
+
+    Returns:
+        Smoothed path with fewer waypoints
+    """
+    if len(path) <= 2:
+        return path
+
+    smoothed = [path[0]]
+    current_idx = 0
+
+    while current_idx < len(path) - 1:
+        # Find the furthest visible point from current position
+        furthest_visible = current_idx + 1  # At minimum, we can reach the next point
+
+        for check_idx in range(len(path) - 1, current_idx + 1, -1):
+            if has_line_of_sight(path[current_idx], path[check_idx], grid):
+                furthest_visible = check_idx
+                break
+
+        smoothed.append(path[furthest_visible])
+        current_idx = furthest_visible
+
+    return smoothed
+
+
+def smooth_path_with_terrain(path: List[Tuple[int, int]], grid: NDArray[np.object_], max_terrain_cost: float = 4.0) -> List[Tuple[int, int]]:
+    """
+    Smooth path while avoiding high-cost terrain (not just obstacles).
+
+    Args:
+        path: List of (i, j) map coordinates from A*
+        grid: 2D numpy array of terrain objects
+        max_terrain_cost: Maximum terrain cost to allow in line-of-sight
+
+    Returns:
+        Smoothed path avoiding high-cost terrain
+    """
+    if len(path) <= 2:
+        return path
+
+    def line_is_clear(p1: Tuple[int, int], p2: Tuple[int, int]) -> bool:
+        """Check if line avoids obstacles and high-cost terrain."""
+        i0, j0 = p1
+        i1, j1 = p2
+
+        di = abs(i1 - i0)
+        dj = abs(j1 - j0)
+
+        i_step = 1 if i0 < i1 else -1
+        j_step = 1 if j0 < j1 else -1
+
+        error = di - dj
+        i, j = i0, j0
+
+        while True:
+            if (i, j) != p1 and (i, j) != p2:
+                cell = grid[i][j]
+                if cell.isObstacle() or cell.getTerrainCost() > max_terrain_cost:
+                    return False
+
+            if i == i1 and j == j1:
+                break
+
+            e2 = 2 * error
+            if e2 > -dj:
+                error -= dj
+                i += i_step
+            if e2 < di:
+                error += di
+                j += j_step
+
+        return True
+
+    smoothed = [path[0]]
+    current_idx = 0
+
+    while current_idx < len(path) - 1:
+        furthest_visible = current_idx + 1
+
+        for check_idx in range(len(path) - 1, current_idx + 1, -1):
+            if line_is_clear(path[current_idx], path[check_idx]):
+                furthest_visible = check_idx
+                break
+
+        smoothed.append(path[furthest_visible])
+        current_idx = furthest_visible
+
+    return smoothed

@@ -29,6 +29,17 @@ All notable changes to this project will be documented in this file.
 - **Logging Infrastructure** - Added configurable logging via `LoggingConfig` dataclass
 - **Goal Cell Protection** - Goals are re-protected from obstacles after each map update
 - **Graceful Shutdown** - Added signal handlers (`SIGINT`, `SIGTERM`) and `shutdown_event` for clean termination
+- **8-Connected A\* Movement** - Added diagonal movement support to A\* algorithm:
+  - New `get_neighbors_8connected()` function with 8 directional moves
+  - `DIAGONAL_COST = √2` for proper diagonal distance calculation
+  - Corner-cutting prevention (blocks diagonal moves when adjacent cells are obstacles)
+  - `use_8_connected` parameter in `astar()` function
+  - `use_8_connected` config option in `NavigationConfig`
+- **Path Smoothing** - Added line-of-sight based path smoothing:
+  - `has_line_of_sight()` function using Bresenham's line algorithm
+  - `smooth_path()` function for basic path optimization
+  - `smooth_path_with_terrain()` for terrain-aware smoothing (avoids high-cost cells)
+  - `use_path_smoothing` config option in `NavigationConfig`
 - **Changelog** - Added this CHANGELOG.md file
 
 ### Changed

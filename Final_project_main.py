@@ -332,11 +332,20 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             print(f"[{robot_name}] Map lock released")
 
         # 8. Run A* pathfinding with thread-safe map access
-        print(f"[{robot_name}] Running A* pathfinding...")
+        print(
+            f"[{robot_name}] Running A* pathfinding (8-connected: {cfg.navigation.use_8_connected})...")
         print(f"[{robot_name}] Acquiring map lock for pathfinding...")
         with map_lock:
             group_path = Func.astar(
-                worldmap, robot_pos, goal_world, R, Resolution)
+                worldmap, robot_pos, goal_world, R, Resolution,
+                use_8_connected=cfg.navigation.use_8_connected)
+
+            # Apply path smoothing if enabled
+            if group_path is not None and cfg.navigation.use_path_smoothing:
+                original_length = len(group_path)
+                group_path = Func.smooth_path(group_path, worldmap)
+                print(
+                    f"[{robot_name}] Path smoothed: {original_length} -> {len(group_path)} waypoints")
         print(f"[{robot_name}] Map lock released after pathfinding")
 
         if group_path is not None:

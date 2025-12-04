@@ -52,6 +52,7 @@ class NavigationConfig:
     scan_interval: float = 1.0      # Seconds between sensor scans
     goal_reached_threshold: float = 0.5  # Distance to consider goal reached
     use_8_connected: bool = False   # Use 8-connected (diagonal) movement
+    use_path_smoothing: bool = False  # Apply path smoothing to reduce waypoints
 
 
 @dataclass

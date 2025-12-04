@@ -191,53 +191,29 @@ logger = logging.getLogger(__name__)
 
 **Enhancement:** Replace `print()` statements with `logger.info()`, `logger.debug()`, etc. for consistent output control.
 
-### Phase 4: Feature Enhancements (Priority: LOW)
+### ~~Phase 4: Feature Enhancements~~ (PARTIALLY COMPLETED ✅)
 
-#### 4.1 8-Connected A\* Movement
+#### ~~4.1 8-Connected A\* Movement~~ (COMPLETED ✅)
 
-The config already has `use_8_connected: bool = False` in `NavigationConfig`. Implementation:
+Implemented in `FP_funcs.py`:
 
-```python
-def get_neighbors_8connected(pos: Tuple[int, int], grid_size: int) -> List[Tuple[Tuple[int, int], float]]:
-    """8-connected neighborhood including diagonals."""
-    i, j = pos
-    n = grid_size
-    neighbors = []
+- `get_neighbors_4connected()` - Original 4-direction movement
+- `get_neighbors_8connected()` - New 8-direction movement including diagonals
+- `get_neighbors()` - Unified function with `use_8_connected` parameter
+- Diagonal moves have cost √2 ≈ 1.414
+- Corner-cutting prevention: diagonal moves blocked if adjacent cells are obstacles
 
-    for di in [-1, 0, 1]:
-        for dj in [-1, 0, 1]:
-            if di == 0 and dj == 0:
-                continue
-            ni, nj = i + di, j + dj
-            if 0 <= ni < n and 0 <= nj < n:
-                # Diagonal cost is sqrt(2) ≈ 1.414
-                cost = 1.414 if di != 0 and dj != 0 else 1.0
-                neighbors.append(((ni, nj), cost))
+Enable via config: `cfg.navigation.use_8_connected = True`
 
-    return neighbors
-```
+#### ~~4.2 Path Smoothing~~ (COMPLETED ✅)
 
-#### 4.2 Path Smoothing
+Implemented in `FP_funcs.py`:
 
-```python
-def smooth_path(path: List[Tuple[int, int]], grid) -> List[Tuple[int, int]]:
-    """Remove unnecessary waypoints using line-of-sight checks."""
-    if len(path) <= 2:
-        return path
+- `has_line_of_sight()` - Bresenham's line algorithm for obstacle checking
+- `smooth_path()` - Removes unnecessary waypoints using line-of-sight
+- `smooth_path_with_terrain()` - Variant that also avoids high-cost terrain
 
-    smoothed = [path[0]]
-    current_idx = 0
-
-    while current_idx < len(path) - 1:
-        # Find furthest visible point
-        for check_idx in range(len(path) - 1, current_idx, -1):
-            if has_line_of_sight(path[current_idx], path[check_idx], grid):
-                smoothed.append(path[check_idx])
-                current_idx = check_idx
-                break
-
-    return smoothed
-```
+Enable via config: `cfg.navigation.use_path_smoothing = True`
 
 #### 4.3 Dynamic Obstacle Avoidance
 
@@ -321,8 +297,8 @@ Add matplotlib-based real-time visualization of:
 | ~~🟡 MEDIUM~~ | ~~Add graceful shutdown~~              | Low    | Medium | ✅ DONE     |
 | ~~🟡 MEDIUM~~ | ~~PEP 8 function naming~~              | Medium | Low    | ✅ DONE     |
 | 🟢 LOW        | Use stepping mode (requires refactor)  | High   | Medium | Not Started |
-| 🟢 LOW        | 8-connected movement                   | Medium | Low    | Not Started |
-| 🟢 LOW        | Path smoothing                         | Medium | Low    | Not Started |
+| ~~🟢 LOW~~    | ~~8-connected movement~~               | Medium | Low    | ✅ DONE     |
+| ~~🟢 LOW~~    | ~~Path smoothing~~                     | Medium | Low    | ✅ DONE     |
 | 🟢 LOW        | Visualization dashboard                | High   | Low    | Not Started |
 
 ---
