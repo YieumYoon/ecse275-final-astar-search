@@ -1,23 +1,49 @@
-# Multisensor Navigation System for Search-and-Rescue Robots
+# Multisensor Navigation System for Autonomous Robots
 
-A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, vision processing, terrain mapping, and A* pathfinding for autonomous robot navigation.
+A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, vision sensing and processing, and A-star pathfinding for autonomous robot navigation.
 
 ## Team Members and Roles
 
+- Halasyam Visvanathan (Primary Developer - A-Star Path Planning)
+- Amos Langsner (Primary Developer - Vision Sensing)
+- Abigail Todd (Primary Developer - Environment Building and Depth Sensing)
+- Junsu Lee (Primary Developer - Integration)
+
+## Introduction
+
+### Motivation
+
+The motivation behind this project is to investigate how autonomous robots can reliably navigate complex, uncertain environments, which is an essential capability for real-world applications, especially with the rise of autonomous robots in our society, on the road, in warehouses, and in as search-and-rescue operations.
+
+### ECSE275 Robotics Concepts
+
+- A-Star algorithm path planning
+- LiDAR sensing
+- Vision sensing and processing
+- Differential drive robots
+- Creating simulations in CopelliaSIM
+- Python coding
+
+### Deliverable
+
+The final deliverable is a team of differential-drive robots that collaboratively explore an unknown environment using LiDAR and vision sensing to detect obstacles, classify terrain, assign traversal costs, and build a shared map. Using this continuously updated map, the robots exchange information and dynamically replan their routes with A-Star to reach their goal locations.
+
+## Approach
+
+### Building Blocks
+
+Approach
+What are the main “building blocks” of your system? How did you implement each of them? Why did you
+choose to implement them this way? How did the ECSE 275 concepts you learned inform your approach to
+each part? What experiments did you conduct and what data did you gather to measure the performance
+of the system or define success? Include a summary flow chart of how different components in your
+implementation interface with each other. What messages or data is passed between components?
+--
 
 
-## Project Overview
 
-This project implements a comprehensive robot navigation system that combines multiple sensor modalities (LiDAR and vision) with intelligent pathfinding algorithms to enable autonomous navigation through varied terrain. The system processes sensor data, builds occupancy maps, detects colored objects, and computes optimal paths using A* search.
 
-## Project Purpose
 
-- Develop a simulated protocol for search and rescue using multiple mobile robots
-- Robots can navigate dangerous environments without endangering humans
-- Multiple robots can quickly sweep an area
-- Coordination enables more efficient search and rescue
-
-![Rescue Robot](RescueRobotIMG1.jpg)
 
 ## Features
 
@@ -231,10 +257,3 @@ The current version contains all necessary interface tools for:
 - Verify start and goal positions are not obstacles
 - Check map resolution matches world size
 - Ensure terrain costs are properly set
-
-## Authors
-
-- Halasyam Visvanathan (Primary Developer - A Star Path Planning)
-- Amos Langsner (Primary Developer - Vision)
-- Abigail Todd (Primary Developer - Map and Depth)
-- Junsu Lee (Primary Developer - Integration)
