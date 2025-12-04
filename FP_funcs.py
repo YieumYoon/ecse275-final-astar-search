@@ -214,98 +214,141 @@ and takes a N length array of terrain objects to update the map.
 '''
 
 
-def Update_map(grid: NDArray[np.object_], terrain_array: List['terrain'], Resolution: int, world_size: float = 10.0) -> None:
-    n = len(grid)
-    R = world_size / Resolution
+def update_map(grid: NDArray[np.object_], terrain_array: List['terrain'], resolution: int, world_size: float = 10.0) -> None:
+    """
+    Update the grid map with terrain objects.
+
+    Args:
+        grid: Grid map of terrain objects (the current world map)
+        terrain_array: Array of terrain objects to add to the map
+        resolution: The resolution of the map (NxN)
+        world_size: Size of the world in meters
+    """
+    cell_size = world_size / resolution
     for idx in range(len(terrain_array)):
-        currTerrain = terrain_array[idx]
-        Terrain_world_coord = currTerrain.getCoordinateArray()
-        Terrain_map_coord = Convert_world_to_map(
-            Terrain_world_coord[0], Terrain_world_coord[1], R, Resolution)
+        curr_terrain = terrain_array[idx]
+        terrain_world_coord = curr_terrain.getCoordinateArray()
+        terrain_map_coord = convert_world_to_map(
+            terrain_world_coord[0], terrain_world_coord[1], cell_size, resolution)
         # Place terrain at its position
-        i, j = Terrain_map_coord
-        grid[i][j] = currTerrain
-        get_cells_to_fill(currTerrain, Resolution, i, j, grid, world_size)
+        i, j = terrain_map_coord
+        grid[i][j] = curr_terrain
+        _get_cells_to_fill(curr_terrain, resolution, i, j, grid, world_size)
 
 
-'''
-Helper function for the Update map function that gets all the cells to fill 
-function not eleborated properly since it is a backend use only code. 
-
-'''
+# Backward compatibility alias
+Update_map = update_map
 
 
-def get_cells_to_fill(terrain_obj: 'terrain', Resolution: int, i: int, j: int, grid: NDArray[np.object_], world_size: float = 10.0) -> None:
-    R = world_size / Resolution
+def _get_cells_to_fill(terrain_obj: 'terrain', resolution: int, i: int, j: int, grid: NDArray[np.object_], world_size: float = 10.0) -> None:
+    """
+    Helper function for update_map that fills multiple cells for large terrain objects.
+    (Internal use only)
+
+    Args:
+        terrain_obj: The terrain object to fill cells with
+        resolution: The resolution of the map (NxN)
+        i, j: Center position in map coordinates
+        grid: The grid map to update
+        world_size: Size of the world in meters
+    """
+    cell_size = world_size / resolution
     width = terrain_obj.getWidth()
-    if width <= R:
+    if width <= cell_size:
         return
-    else:
-        print("else case is triggered")
-        num_squares_to_fill = int(width/R)
-        leftmost_i = (i - num_squares_to_fill//2)
-        topmost_j = (j - num_squares_to_fill//2)
 
-        rightmost = leftmost_i + num_squares_to_fill
-        bottom_most = topmost_j + num_squares_to_fill
-        for iterating_width in range(leftmost_i, rightmost):
-            for iterating_length in range(topmost_j, bottom_most):
-                # Bounds check
-                if 0 <= iterating_width < Resolution and 0 <= iterating_length < Resolution:
-                    grid[iterating_width, iterating_length] = terrain_obj
+    num_squares_to_fill = int(width / cell_size)
+    leftmost_i = i - num_squares_to_fill // 2
+    topmost_j = j - num_squares_to_fill // 2
 
-
-"""
-This is a function to convert from a world coordinate point into a discreet map point
-assumes (0,0) is the center of the map
-
-Xw - X position of point detected 
-Yw - Y position of the point detected 
-R - width of the sqaure world discret space
-Resolution - The resolution of the map  
-
-Returns [X position in map,Y position in map]
-"""
+    rightmost = leftmost_i + num_squares_to_fill
+    bottom_most = topmost_j + num_squares_to_fill
+    for row in range(leftmost_i, rightmost):
+        for col in range(topmost_j, bottom_most):
+            # Bounds check
+            if 0 <= row < resolution and 0 <= col < resolution:
+                grid[row, col] = terrain_obj
 
 
-def Convert_world_to_map(Xw: float, Yw: float, R: float, Resolution: int) -> List[int]:
-    half = Resolution / 2
-    i = Xw / R + half
-    j = Yw / R + half
+# Backward compatibility alias
+get_cells_to_fill = _get_cells_to_fill
+
+
+def convert_world_to_map(x_world: float, y_world: float, cell_size: float, resolution: int) -> List[int]:
+    """
+    Convert from world coordinates to discrete map coordinates.
+    Assumes (0,0) is the center of the map.
+
+    Args:
+        x_world: X position in world coordinates
+        y_world: Y position in world coordinates
+        cell_size: Width of each discrete square (R)
+        resolution: The resolution of the map (NxN)
+
+    Returns:
+        [i, j] position in map coordinates
+    """
+    half = resolution / 2
+    i = x_world / cell_size + half
+    j = y_world / cell_size + half
     return [int(i), int(j)]
 
 
-'''
-This is a function that goes from map coordianted to world coordinates , with 
-'''
+# Backward compatibility alias
+Convert_world_to_map = convert_world_to_map
 
 
-def Convert_map_to_world(i: int, j: int, R: float, Resolution: int) -> List[float]:
-    half = Resolution / 2
-    Xw = (i - half) * R
-    Yw = (j - half) * R
-    return [Xw, Yw]
+def convert_map_to_world(i: int, j: int, cell_size: float, resolution: int) -> List[float]:
+    """
+    Convert from map coordinates to world coordinates.
+
+    Args:
+        i: Row index in map
+        j: Column index in map
+        cell_size: Width of each discrete square (R)
+        resolution: The resolution of the map (NxN)
+
+    Returns:
+        [x_world, y_world] position in world coordinates
+    """
+    half = resolution / 2
+    x_world = (i - half) * cell_size
+    y_world = (j - half) * cell_size
+    return [x_world, y_world]
 
 
-"""
-This Function creates a Numpy array of N by N Zeros where N is the resolution of the map
-The value at each coordinate is the cost to come for that coordinate
-"""
+# Backward compatibility alias
+Convert_map_to_world = convert_map_to_world
 
 
-def createMap_withResolution(Resolution: int, world_size: float = 10.0) -> NDArray[np.object_]:
-    Map = np.zeros((Resolution, Resolution), dtype=object)
-    R = world_size / Resolution
-    for i in range(0, Resolution):
-        for j in range(0, Resolution):
-            Map[i][j] = terrain(
+def create_map_with_resolution(resolution: int, world_size: float = 10.0) -> NDArray[np.object_]:
+    """
+    Create a numpy array of NxN terrain objects where N is the resolution.
+    Each cell is initialized as FLOOR terrain.
+
+    Args:
+        resolution: The resolution of the map (NxN)
+        world_size: Size of the world in meters
+
+    Returns:
+        2D numpy array of terrain objects
+    """
+    grid_map = np.zeros((resolution, resolution), dtype=object)
+    cell_size = world_size / resolution
+    for i in range(resolution):
+        for j in range(resolution):
+            grid_map[i][j] = terrain(
                 width=0,
-                Coordinate=Convert_map_to_world(i, j, R, Resolution),
+                Coordinate=convert_map_to_world(i, j, cell_size, resolution),
                 terrain=TerrainType.FLOOR,
-                resolution=Resolution
+                resolution=resolution
             )
 
-    return Map
+    return grid_map
+
+
+# Backward compatibility alias
+createMap_withResolution = create_map_with_resolution
 
 
 """
@@ -418,15 +461,10 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
     n = len(grid)
 
     # Convert world coordinates to map coordinates
-    start_map = Convert_world_to_map(start[0], start[1], R, Resolution)
+    start_map = convert_world_to_map(start[0], start[1], R, Resolution)
     start_map = tuple(start_map)
-    goal_map = Convert_world_to_map(goal[0], goal[1], R, Resolution)
+    goal_map = convert_world_to_map(goal[0], goal[1], R, Resolution)
     goal_map = tuple(goal_map)
-
-    # Check if start or goal is an obstacle
-    # if grid[start_map[0]][start_map[1]].isObstacle():
-    #   print(f"Goal start {goal_map} is an obstacle!")
-    #  return None
 
     if grid[goal_map[0]][goal_map[1]].isObstacle():
         print(f"Goal position {goal_map} is an obstacle! !!!!!!")

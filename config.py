@@ -65,6 +65,13 @@ class TerrainCosts:
 
 
 @dataclass
+class TerrainWidthConfig:
+    """Width values for terrain detection."""
+    vision_detected: float = 0.5    # Width for vision-detected terrain (color-based)
+    lidar_obstacle: float = 1.0     # Width for LiDAR-detected obstacles
+
+
+@dataclass
 class RobotConfig:
     """Configuration for robots in the simulation."""
     names: List[str] = field(default_factory=lambda: ["/Robot_0", "/Robot_1"])
@@ -92,6 +99,8 @@ class ProjectConfig:
     sensor: SensorConfig = field(default_factory=SensorConfig)
     navigation: NavigationConfig = field(default_factory=NavigationConfig)
     terrain_costs: TerrainCosts = field(default_factory=TerrainCosts)
+    terrain_width: TerrainWidthConfig = field(
+        default_factory=TerrainWidthConfig)
     robots: RobotConfig = field(default_factory=RobotConfig)
     goals: GoalConfig = field(default_factory=GoalConfig)
 
