@@ -363,10 +363,10 @@ if __name__ == "__main__":
     sim = client.require('sim')
     print("Connection established!")
 
-    # Enable stepping mode for synchronized, deterministic simulation
-    # This ensures all robots see the same simulation state
-    sim.setStepping(True)
-    print("Stepping mode enabled for synchronized simulation")
+    # NOTE: Stepping mode is disabled because it conflicts with multi-threaded architecture
+    # Each robot thread has its own ZMQ client and timing, which doesn't sync well with stepping
+    # For deterministic simulation, would need to refactor to single-threaded event loop
+    print("Running in continuous simulation mode (no stepping)")
 
     # 2. Initialize the map with resolution (from config)
     Resolution = cfg.map.resolution  # the resolution of the map
@@ -454,15 +454,10 @@ if __name__ == "__main__":
         print(f"Thread started for {robot_name}")
         time.sleep(1.0)  # Longer delay to ensure clean startup
 
-    # Main loop: advance simulation and keep main thread alive
-    # The stepping mode ensures synchronized robot control
-    print("\nMain loop started - advancing simulation steps...")
+    # Main loop: keep main thread alive while robot threads run
+    print("\nMain loop started - robot threads are running...")
     try:
         while True:
-            # Advance simulation by one step
-            # This allows the physics engine to update all robot positions
-            sim.step()
-            time.sleep(0.05)  # ~20 steps per second
+            time.sleep(1)
     except KeyboardInterrupt:
         print("\n\nShutting down...")
-        sim.setStepping(False)  # Disable stepping mode on exit
