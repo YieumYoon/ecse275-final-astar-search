@@ -369,6 +369,8 @@ Overall, our implementation was successful. The system is able to detect obstacl
 
 ## Conclusion
 
+The simulation successfully integrates LiDAR and vision sensing to gather environmental data and construct a map. A team of robots utilize a dynamic A-Star algorithm to plan paths and efficiently reach their goals, demonstrating coordinated navigation and adaptability within the environment.
+
 ### Future Enhancements
 
 1. **Multi-Robot System**
