@@ -6,8 +6,8 @@ A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, visi
 
 - Halasyam Visvanathan (Primary Developer - A-Star Path Planning, Testing)
 - Amos Langsner (Primary Developer - Vision Sensing, Write-up)
-- Abigail Todd (Primary Developer - Environment Building and Depth Sensing)
-- Junsu Lee (Primary Developer - Integration)
+- Abigail Todd (Primary Developer - Environment Building and Depth Sensing, Write-up)
+- Junsu Lee (Primary Developer - Integration, Testing)
 
 ## Introduction
 
