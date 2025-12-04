@@ -47,13 +47,13 @@ The final deliverable is a team of differential-drive robots that collaborativel
 - **Vision Sensor Processing**
   - RGB image capture and processing (256×256 resolution)
   - Depth map extraction and conversion
-  - Color-based object detection (red, green, blue)
+  - Color-based object detection (red, green, blue, black)
   - Centroid calculation from color masks
   - Pixel-to-robot-to-world coordinate transformation
 
 - **Terrain Mapping**
   - Dynamic map creation with configurable resolution
-  - Multiple terrain types (floor, grass, sand, water, obstacle)
+  - Multiple terrain types (floor, grass (green), sand (red), water (blue), obstacle (black))
   - Terrain cost assignment for pathfinding
   - Real-time map updates based on sensor data
  
