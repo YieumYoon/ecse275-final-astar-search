@@ -15,7 +15,7 @@ import math
 import heapq
 import logging
 
-# Configure module logger
+# Module logger - configuration is done in main module
 logger = logging.getLogger(__name__)
 
 
@@ -214,98 +214,141 @@ and takes a N length array of terrain objects to update the map.
 '''
 
 
-def Update_map(grid: NDArray[np.object_], terrain_array: List['terrain'], Resolution: int, world_size: float = 10.0) -> None:
-    n = len(grid)
-    R = world_size / Resolution
+def update_map(grid: NDArray[np.object_], terrain_array: List['terrain'], resolution: int, world_size: float = 10.0) -> None:
+    """
+    Update the grid map with terrain objects.
+
+    Args:
+        grid: Grid map of terrain objects (the current world map)
+        terrain_array: Array of terrain objects to add to the map
+        resolution: The resolution of the map (NxN)
+        world_size: Size of the world in meters
+    """
+    cell_size = world_size / resolution
     for idx in range(len(terrain_array)):
-        currTerrain = terrain_array[idx]
-        Terrain_world_coord = currTerrain.getCoordinateArray()
-        Terrain_map_coord = Convert_world_to_map(
-            Terrain_world_coord[0], Terrain_world_coord[1], R, Resolution)
+        curr_terrain = terrain_array[idx]
+        terrain_world_coord = curr_terrain.getCoordinateArray()
+        terrain_map_coord = convert_world_to_map(
+            terrain_world_coord[0], terrain_world_coord[1], cell_size, resolution)
         # Place terrain at its position
-        i, j = Terrain_map_coord
-        grid[i][j] = currTerrain
-        get_cells_to_fill(currTerrain, Resolution, i, j, grid, world_size)
+        i, j = terrain_map_coord
+        grid[i][j] = curr_terrain
+        _get_cells_to_fill(curr_terrain, resolution, i, j, grid, world_size)
 
 
-'''
-Helper function for the Update map function that gets all the cells to fill 
-function not eleborated properly since it is a backend use only code. 
-
-'''
+# Backward compatibility alias
+Update_map = update_map
 
 
-def get_cells_to_fill(terrain_obj: 'terrain', Resolution: int, i: int, j: int, grid: NDArray[np.object_], world_size: float = 10.0) -> None:
-    R = world_size / Resolution
+def _get_cells_to_fill(terrain_obj: 'terrain', resolution: int, i: int, j: int, grid: NDArray[np.object_], world_size: float = 10.0) -> None:
+    """
+    Helper function for update_map that fills multiple cells for large terrain objects.
+    (Internal use only)
+
+    Args:
+        terrain_obj: The terrain object to fill cells with
+        resolution: The resolution of the map (NxN)
+        i, j: Center position in map coordinates
+        grid: The grid map to update
+        world_size: Size of the world in meters
+    """
+    cell_size = world_size / resolution
     width = terrain_obj.getWidth()
-    if width <= R:
+    if width <= cell_size:
         return
-    else:
-        print("else case is triggered")
-        num_squares_to_fill = int(width/R)
-        leftmost_i = (i - num_squares_to_fill//2)
-        topmost_j = (j - num_squares_to_fill//2)
 
-        rightmost = leftmost_i + num_squares_to_fill
-        bottom_most = topmost_j + num_squares_to_fill
-        for iterating_width in range(leftmost_i, rightmost):
-            for iterating_length in range(topmost_j, bottom_most):
-                # Bounds check
-                if 0 <= iterating_width < Resolution and 0 <= iterating_length < Resolution:
-                    grid[iterating_width, iterating_length] = terrain_obj
+    num_squares_to_fill = int(width / cell_size)
+    leftmost_i = i - num_squares_to_fill // 2
+    topmost_j = j - num_squares_to_fill // 2
 
-
-"""
-This is a function to convert from a world coordinate point into a discreet map point
-assumes (0,0) is the center of the map
-
-Xw - X position of point detected 
-Yw - Y position of the point detected 
-R - width of the sqaure world discret space
-Resolution - The resolution of the map  
-
-Returns [X position in map,Y position in map]
-"""
+    rightmost = leftmost_i + num_squares_to_fill
+    bottom_most = topmost_j + num_squares_to_fill
+    for row in range(leftmost_i, rightmost):
+        for col in range(topmost_j, bottom_most):
+            # Bounds check
+            if 0 <= row < resolution and 0 <= col < resolution:
+                grid[row, col] = terrain_obj
 
 
-def Convert_world_to_map(Xw: float, Yw: float, R: float, Resolution: int) -> List[int]:
-    half = Resolution / 2
-    i = Xw / R + half
-    j = Yw / R + half
+# Backward compatibility alias
+get_cells_to_fill = _get_cells_to_fill
+
+
+def convert_world_to_map(x_world: float, y_world: float, cell_size: float, resolution: int) -> List[int]:
+    """
+    Convert from world coordinates to discrete map coordinates.
+    Assumes (0,0) is the center of the map.
+
+    Args:
+        x_world: X position in world coordinates
+        y_world: Y position in world coordinates
+        cell_size: Width of each discrete square (R)
+        resolution: The resolution of the map (NxN)
+
+    Returns:
+        [i, j] position in map coordinates
+    """
+    half = resolution / 2
+    i = x_world / cell_size + half
+    j = y_world / cell_size + half
     return [int(i), int(j)]
 
 
-'''
-This is a function that goes from map coordianted to world coordinates , with 
-'''
+# Backward compatibility alias
+Convert_world_to_map = convert_world_to_map
 
 
-def Convert_map_to_world(i: int, j: int, R: float, Resolution: int) -> List[float]:
-    half = Resolution / 2
-    Xw = (i - half) * R
-    Yw = (j - half) * R
-    return [Xw, Yw]
+def convert_map_to_world(i: int, j: int, cell_size: float, resolution: int) -> List[float]:
+    """
+    Convert from map coordinates to world coordinates.
+
+    Args:
+        i: Row index in map
+        j: Column index in map
+        cell_size: Width of each discrete square (R)
+        resolution: The resolution of the map (NxN)
+
+    Returns:
+        [x_world, y_world] position in world coordinates
+    """
+    half = resolution / 2
+    x_world = (i - half) * cell_size
+    y_world = (j - half) * cell_size
+    return [x_world, y_world]
 
 
-"""
-This Function creates a Numpy array of N by N Zeros where N is the resolution of the map
-The value at each coordinate is the cost to come for that coordinate
-"""
+# Backward compatibility alias
+Convert_map_to_world = convert_map_to_world
 
 
-def createMap_withResolution(Resolution: int, world_size: float = 10.0) -> NDArray[np.object_]:
-    Map = np.zeros((Resolution, Resolution), dtype=object)
-    R = world_size / Resolution
-    for i in range(0, Resolution):
-        for j in range(0, Resolution):
-            Map[i][j] = terrain(
+def create_map_with_resolution(resolution: int, world_size: float = 10.0) -> NDArray[np.object_]:
+    """
+    Create a numpy array of NxN terrain objects where N is the resolution.
+    Each cell is initialized as FLOOR terrain.
+
+    Args:
+        resolution: The resolution of the map (NxN)
+        world_size: Size of the world in meters
+
+    Returns:
+        2D numpy array of terrain objects
+    """
+    grid_map = np.zeros((resolution, resolution), dtype=object)
+    cell_size = world_size / resolution
+    for i in range(resolution):
+        for j in range(resolution):
+            grid_map[i][j] = terrain(
                 width=0,
-                Coordinate=Convert_map_to_world(i, j, R, Resolution),
+                Coordinate=convert_map_to_world(i, j, cell_size, resolution),
                 terrain=TerrainType.FLOOR,
-                resolution=Resolution
+                resolution=resolution
             )
 
-    return Map
+    return grid_map
+
+
+# Backward compatibility alias
+createMap_withResolution = create_map_with_resolution
 
 
 """
@@ -375,33 +418,92 @@ class terrain():
 
 
 """
-A* Algorithm Implementation (4-connected)
+A* Algorithm Implementation (supports 4-connected and 8-connected)
 ------------------------------------------------
 Heuristic: Euclidean distance between current cell and goal.
 """
+
+# Diagonal movement cost (sqrt(2))
+DIAGONAL_COST = math.sqrt(2)
 
 
 def heuristic(a: Tuple[int, int], b: Tuple[int, int]) -> float:
     return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
 
-def get_neighbors(pos: Tuple[int, int], grid_size: int) -> List[Tuple[int, int]]:
+def get_neighbors_4connected(pos: Tuple[int, int], grid_size: int) -> List[Tuple[Tuple[int, int], float]]:
+    """
+    Get 4-connected neighbors (up, down, left, right).
+
+    Args:
+        pos: Current position (i, j)
+        grid_size: Size of the grid (n)
+
+    Returns:
+        List of ((neighbor_i, neighbor_j), movement_cost) tuples
+    """
     i, j = pos
     n = grid_size
     neighbors = []
     # 4-connected neighborhood (up, down, left, right)
     if i > 0:
-        neighbors.append((i - 1, j))
+        neighbors.append(((i - 1, j), 1.0))
     if i < n - 1:
-        neighbors.append((i + 1, j))
+        neighbors.append(((i + 1, j), 1.0))
     if j > 0:
-        neighbors.append((i, j - 1))
+        neighbors.append(((i, j - 1), 1.0))
     if j < n - 1:
-        neighbors.append((i, j + 1))
+        neighbors.append(((i, j + 1), 1.0))
     return neighbors
 
 
-def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: float, Resolution: int) -> Optional[List[Tuple[int, int]]]:
+def get_neighbors_8connected(pos: Tuple[int, int], grid_size: int) -> List[Tuple[Tuple[int, int], float]]:
+    """
+    Get 8-connected neighbors including diagonals.
+
+    Args:
+        pos: Current position (i, j)
+        grid_size: Size of the grid (n)
+
+    Returns:
+        List of ((neighbor_i, neighbor_j), movement_cost) tuples
+        Diagonal moves have cost sqrt(2) ≈ 1.414
+    """
+    i, j = pos
+    n = grid_size
+    neighbors = []
+
+    for di in [-1, 0, 1]:
+        for dj in [-1, 0, 1]:
+            if di == 0 and dj == 0:
+                continue
+            ni, nj = i + di, j + dj
+            if 0 <= ni < n and 0 <= nj < n:
+                # Diagonal cost is sqrt(2), cardinal cost is 1.0
+                cost = DIAGONAL_COST if (di != 0 and dj != 0) else 1.0
+                neighbors.append(((ni, nj), cost))
+
+    return neighbors
+
+
+def get_neighbors(pos: Tuple[int, int], grid_size: int, use_8_connected: bool = False) -> List[Tuple[Tuple[int, int], float]]:
+    """
+    Get neighbors based on connectivity setting.
+
+    Args:
+        pos: Current position (i, j)
+        grid_size: Size of the grid (n)
+        use_8_connected: If True, include diagonal neighbors
+
+    Returns:
+        List of ((neighbor_i, neighbor_j), movement_cost) tuples
+    """
+    if use_8_connected:
+        return get_neighbors_8connected(pos, grid_size)
+    return get_neighbors_4connected(pos, grid_size)
+
+
+def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: float, Resolution: int, use_8_connected: bool = False) -> Optional[List[Tuple[int, int]]]:
     """
     A* pathfinding algorithm.
 
@@ -411,6 +513,7 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
         goal: World coordinates [x, y] or [x, y, z]
         R: Cell size (world_size / Resolution)
         Resolution: Grid resolution
+        use_8_connected: If True, allow diagonal movement (default: False)
 
     Returns:
         List of (i, j) map coordinates from start to goal, or None if no path.
@@ -418,15 +521,10 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
     n = len(grid)
 
     # Convert world coordinates to map coordinates
-    start_map = Convert_world_to_map(start[0], start[1], R, Resolution)
+    start_map = convert_world_to_map(start[0], start[1], R, Resolution)
     start_map = tuple(start_map)
-    goal_map = Convert_world_to_map(goal[0], goal[1], R, Resolution)
+    goal_map = convert_world_to_map(goal[0], goal[1], R, Resolution)
     goal_map = tuple(goal_map)
-
-    # Check if start or goal is an obstacle
-    # if grid[start_map[0]][start_map[1]].isObstacle():
-    #   print(f"Goal start {goal_map} is an obstacle!")
-    #  return None
 
     if grid[goal_map[0]][goal_map[1]].isObstacle():
         print(f"Goal position {goal_map} is an obstacle! !!!!!!")
@@ -459,7 +557,7 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
             path.append(start_map)
             return path[::-1]  # Reverse: start -> goal
 
-        for neighbor in get_neighbors(current, n):
+        for neighbor, move_cost in get_neighbors(current, n, use_8_connected):
             if neighbor in closed_set:
                 continue
 
@@ -469,10 +567,20 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
             if neighbor_cell.isObstacle():
                 continue
 
+            # For diagonal moves, check if path is blocked by adjacent obstacles
+            if use_8_connected and move_cost > 1.0:
+                di = neighbor[0] - current[0]
+                dj = neighbor[1] - current[1]
+                # Check both adjacent cells for diagonal movement
+                adj1 = grid[current[0] + di][current[1]]
+                adj2 = grid[current[0]][current[1] + dj]
+                if adj1.isObstacle() or adj2.isObstacle():
+                    continue  # Can't cut corners
+
             terrain_cost = neighbor_cell.getTerrainCost()
 
-            # Cost = previous cost + 1 (movement) + terrain penalty
-            tentative_g = g_score[current] + 1 + terrain_cost
+            # Cost = previous cost + movement cost + terrain penalty
+            tentative_g = g_score[current] + move_cost + terrain_cost
 
             if neighbor not in g_score or tentative_g < g_score[neighbor]:
                 g_score[neighbor] = tentative_g
@@ -482,7 +590,155 @@ def astar(grid: NDArray[np.object_], start: List[float], goal: List[float], R: f
 
     # At the end of astar, before "return None"
     print(f"A* exhausted. Explored {len(closed_set)} cells")
-    print(f"Closed set: {closed_set}")
     print(f"Start map: {start_map}, Goal map: {goal_map}")
 
     return None  # No path found
+
+
+# =============================================================================
+# Path Smoothing Functions
+# =============================================================================
+
+def has_line_of_sight(p1: Tuple[int, int], p2: Tuple[int, int], grid: NDArray[np.object_]) -> bool:
+    """
+    Check if there's a clear line of sight between two grid cells using Bresenham's line algorithm.
+
+    Args:
+        p1: Start position (i, j)
+        p2: End position (i, j)
+        grid: 2D numpy array of terrain objects
+
+    Returns:
+        True if no obstacles block the line, False otherwise
+    """
+    i0, j0 = p1
+    i1, j1 = p2
+
+    di = abs(i1 - i0)
+    dj = abs(j1 - j0)
+
+    i_step = 1 if i0 < i1 else -1
+    j_step = 1 if j0 < j1 else -1
+
+    error = di - dj
+
+    i, j = i0, j0
+
+    while True:
+        # Check if current cell is an obstacle (skip start and end)
+        if (i, j) != p1 and (i, j) != p2:
+            if grid[i][j].isObstacle():
+                return False
+
+        if i == i1 and j == j1:
+            break
+
+        e2 = 2 * error
+
+        if e2 > -dj:
+            error -= dj
+            i += i_step
+
+        if e2 < di:
+            error += di
+            j += j_step
+
+    return True
+
+
+def smooth_path(path: List[Tuple[int, int]], grid: NDArray[np.object_]) -> List[Tuple[int, int]]:
+    """
+    Remove unnecessary waypoints from a path using line-of-sight checks.
+    This reduces the number of waypoints while maintaining a valid path.
+
+    Args:
+        path: List of (i, j) map coordinates from A*
+        grid: 2D numpy array of terrain objects
+
+    Returns:
+        Smoothed path with fewer waypoints
+    """
+    if len(path) <= 2:
+        return path
+
+    smoothed = [path[0]]
+    current_idx = 0
+
+    while current_idx < len(path) - 1:
+        # Find the furthest visible point from current position
+        furthest_visible = current_idx + 1  # At minimum, we can reach the next point
+
+        for check_idx in range(len(path) - 1, current_idx + 1, -1):
+            if has_line_of_sight(path[current_idx], path[check_idx], grid):
+                furthest_visible = check_idx
+                break
+
+        smoothed.append(path[furthest_visible])
+        current_idx = furthest_visible
+
+    return smoothed
+
+
+def smooth_path_with_terrain(path: List[Tuple[int, int]], grid: NDArray[np.object_], max_terrain_cost: float = 4.0) -> List[Tuple[int, int]]:
+    """
+    Smooth path while avoiding high-cost terrain (not just obstacles).
+
+    Args:
+        path: List of (i, j) map coordinates from A*
+        grid: 2D numpy array of terrain objects
+        max_terrain_cost: Maximum terrain cost to allow in line-of-sight
+
+    Returns:
+        Smoothed path avoiding high-cost terrain
+    """
+    if len(path) <= 2:
+        return path
+
+    def line_is_clear(p1: Tuple[int, int], p2: Tuple[int, int]) -> bool:
+        """Check if line avoids obstacles and high-cost terrain."""
+        i0, j0 = p1
+        i1, j1 = p2
+
+        di = abs(i1 - i0)
+        dj = abs(j1 - j0)
+
+        i_step = 1 if i0 < i1 else -1
+        j_step = 1 if j0 < j1 else -1
+
+        error = di - dj
+        i, j = i0, j0
+
+        while True:
+            if (i, j) != p1 and (i, j) != p2:
+                cell = grid[i][j]
+                if cell.isObstacle() or cell.getTerrainCost() > max_terrain_cost:
+                    return False
+
+            if i == i1 and j == j1:
+                break
+
+            e2 = 2 * error
+            if e2 > -dj:
+                error -= dj
+                i += i_step
+            if e2 < di:
+                error += di
+                j += j_step
+
+        return True
+
+    smoothed = [path[0]]
+    current_idx = 0
+
+    while current_idx < len(path) - 1:
+        furthest_visible = current_idx + 1
+
+        for check_idx in range(len(path) - 1, current_idx + 1, -1):
+            if line_is_clear(path[current_idx], path[check_idx]):
+                furthest_visible = check_idx
+                break
+
+        smoothed.append(path[furthest_visible])
+        current_idx = furthest_visible
+
+    return smoothed

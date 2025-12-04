@@ -15,14 +15,29 @@ import time
 import matplotlib.pyplot as plt
 import threading
 import logging
+import signal
 
-# Configure logging
+# Configure logging from config
 logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] [%(threadName)s] %(levelname)s: %(message)s',
-    datefmt='%H:%M:%S'
+    level=cfg.logging.get_level(),
+    format=cfg.logging.format,
+    datefmt=cfg.logging.date_format
 )
 logger = logging.getLogger(__name__)
+
+# Shutdown event for graceful termination
+shutdown_event = threading.Event()
+
+
+def signal_handler(signum, frame):
+    """Handle shutdown signals gracefully."""
+    print("\n\nReceived shutdown signal, stopping robot threads...")
+    shutdown_event.set()
+
+
+# Register signal handlers
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 # Global locks for thread-safe access
 map_lock = threading.Lock()
@@ -68,7 +83,7 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
 
     scan_count = 0
 
-    while True:
+    while not shutdown_event.is_set():
         scan_count += 1
         print(f"\n[{robot_name}] Scan #{scan_count} - Time: {time.time():.2f}")
 
@@ -259,9 +274,8 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
         terrain_array = []
 
         for color, world_coord, terrain_type in terrain_detections:
-            terrain_width = 0.5
             terrain_obj = Func.terrain(
-                width=terrain_width,
+                width=cfg.terrain_width.vision_detected,
                 Coordinate=[world_coord[0], world_coord[1]],
                 terrain=terrain_type,
                 resolution=Resolution
@@ -269,9 +283,8 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             terrain_array.append(terrain_obj)
 
         for obstacle_coord in centroids_world:
-            terrain_width = 1.0
             terrain_obj = Func.terrain(
-                width=terrain_width,
+                width=cfg.terrain_width.lidar_obstacle,
                 Coordinate=[obstacle_coord[0], obstacle_coord[1]],
                 terrain=Func.TerrainType.OBSTACLE,
                 resolution=Resolution
@@ -319,11 +332,20 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             print(f"[{robot_name}] Map lock released")
 
         # 8. Run A* pathfinding with thread-safe map access
-        print(f"[{robot_name}] Running A* pathfinding...")
+        print(
+            f"[{robot_name}] Running A* pathfinding (8-connected: {cfg.navigation.use_8_connected})...")
         print(f"[{robot_name}] Acquiring map lock for pathfinding...")
         with map_lock:
             group_path = Func.astar(
-                worldmap, robot_pos, goal_world, R, Resolution)
+                worldmap, robot_pos, goal_world, R, Resolution,
+                use_8_connected=cfg.navigation.use_8_connected)
+
+            # Apply path smoothing if enabled
+            if group_path is not None and cfg.navigation.use_path_smoothing:
+                original_length = len(group_path)
+                group_path = Func.smooth_path(group_path, worldmap)
+                print(
+                    f"[{robot_name}] Path smoothed: {original_length} -> {len(group_path)} waypoints")
         print(f"[{robot_name}] Map lock released after pathfinding")
 
         if group_path is not None:
@@ -358,7 +380,10 @@ def robot_control_thread(robot_name, robot_info, worldmap, R, Resolution, scan_i
             # Next scan will update the map and attempt pathfinding again
 
         print(f"[{robot_name}] Scan complete. Waiting {scan_interval}s...")
-        time.sleep(scan_interval)
+        # Use event wait instead of sleep for faster shutdown response
+        shutdown_event.wait(timeout=scan_interval)
+
+    print(f"[{robot_name}] Thread stopping...")
 
 
 if __name__ == "__main__":
@@ -465,8 +490,16 @@ if __name__ == "__main__":
 
     # Main loop: keep main thread alive while robot threads run
     print("\nMain loop started - robot threads are running...")
+    print("Press Ctrl+C to stop gracefully.")
     try:
-        while True:
-            time.sleep(1)
+        while not shutdown_event.is_set():
+            time.sleep(0.5)
     except KeyboardInterrupt:
-        print("\n\nShutting down...")
+        pass  # Handled by signal_handler
+
+    # Wait for threads to finish
+    print("Waiting for robot threads to stop...")
+    for thread in threads:
+        thread.join(timeout=2.0)
+
+    print("Shutdown complete.")
