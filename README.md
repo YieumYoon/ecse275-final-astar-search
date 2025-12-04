@@ -2,9 +2,6 @@
 
 A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, vision sensing and processing, and A-star pathfinding for autonomous robot navigation.
 
-## Video(GIFs)
-![alt text](275video_720p.gif)
-
 ## Team Members and Roles
 
 - Halasyam Visvanathan (Primary Developer - A-Star Path Planning)
@@ -47,13 +44,13 @@ The final deliverable is a team of differential-drive robots that collaborativel
 - **Vision Sensor Processing**
   - RGB image capture and processing (256×256 resolution)
   - Depth map extraction and conversion
-  - Color-based object detection (red, green, blue, black)
+  - Color-based object detection (red, green, blue)
   - Centroid calculation from color masks
   - Pixel-to-robot-to-world coordinate transformation
 
 - **Terrain Mapping**
   - Dynamic map creation with configurable resolution
-  - Multiple terrain types (floor, grass (green), sand (red), water (blue), obstacle (black))
+  - Multiple terrain types (floor, grass, sand, water, obstacle)
   - Terrain cost assignment for pathfinding
   - Real-time map updates based on sensor data
  
@@ -194,14 +191,29 @@ Adjust color threshold in `mask_color()` function (default: 20-point margin)
 #### LiDAR Segmentation
 Groups consecutive points if distance < threshold, separating distinct objects
 
-### Conclusion
+### Testing
 
-Multiple mobile robots equipped with LiDAR and vision sensing can successfully navigate a complex environment together using A Star planning. This approach could be utilized to develop swarms of small, affordable rescue robots who could rapidly sweep a disaster site in a efficient manner.
+1. Variable Field-of-View (FOV)
+We conducted three trials under two different camera field-of-view settings: 60° and 120°. In each trial, we recorded the time taken to reach the first goal and the time taken to reach all goals. This data allowed us to quantify how FOV impacts navigation efficiency and overall system performance.
 
-## Future Enhancements
+2. 
+
+
+Include a summary flow chart of how different components in your
+implementation interface with each other. What messages or data is passed between components?
+
+## Results
+
+![alt text](275video_720p.gif)
+
+### Data
+
+### Success
+
+### Future Enhancements
 
 1. **Multi-Robot System**
-   - Coordinate multiple robots
+   - Coordinate 3, 4, 5 robots
    - Dynamic task allocation
    - Shared map updates
 
@@ -231,3 +243,4 @@ Multiple mobile robots equipped with LiDAR and vision sensing can successfully n
 - Verify start and goal positions are not obstacles
 - Check map resolution matches world size
 - Ensure terrain costs are properly set
+
