@@ -206,6 +206,8 @@ We conducted three trials under two different camera field-of-view settings: 60Â
 
 ![alt text](275video_720p.gif)
 
+![FOV Data Table](DataTable_FOV.jpg)
+
 ### Data
 
 ### Success
