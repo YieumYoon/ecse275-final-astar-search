@@ -15,7 +15,7 @@ import math
 import heapq
 import logging
 
-# Configure module logger
+# Module logger - configuration is done in main module
 logger = logging.getLogger(__name__)
 
 

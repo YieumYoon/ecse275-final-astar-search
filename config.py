@@ -11,6 +11,19 @@ Date: Dec 3, 2025
 
 from dataclasses import dataclass, field
 from typing import List
+import logging
+
+
+@dataclass
+class LoggingConfig:
+    """Configuration for logging output."""
+    level: str = "INFO"            # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    format: str = '[%(asctime)s] [%(threadName)s] %(levelname)s: %(message)s'
+    date_format: str = '%H:%M:%S'
+
+    def get_level(self) -> int:
+        """Convert string level to logging constant."""
+        return getattr(logging, self.level.upper(), logging.INFO)
 
 
 @dataclass
@@ -18,7 +31,7 @@ class MapConfig:
     """Configuration for the occupancy grid map."""
     resolution: int = 100           # Grid resolution (NxN cells)
     world_size: float = 10.0        # World size in meters
-    
+
     @property
     def cell_size(self) -> float:
         """Calculate the cell size (R) in meters."""
@@ -64,7 +77,7 @@ class GoalConfig:
     """Configuration for goal points."""
     names: List[str] = field(default_factory=lambda: [
         "/goal_point",
-        "/goal_point_1", 
+        "/goal_point_1",
         "/goal_point_2",
         "/goal_point_3",
         "/goal_point_4"
@@ -74,6 +87,7 @@ class GoalConfig:
 @dataclass
 class ProjectConfig:
     """Master configuration combining all sub-configurations."""
+    logging: LoggingConfig = field(default_factory=LoggingConfig)
     map: MapConfig = field(default_factory=MapConfig)
     sensor: SensorConfig = field(default_factory=SensorConfig)
     navigation: NavigationConfig = field(default_factory=NavigationConfig)

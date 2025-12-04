@@ -16,11 +16,11 @@ import matplotlib.pyplot as plt
 import threading
 import logging
 
-# Configure logging
+# Configure logging from config
 logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] [%(threadName)s] %(levelname)s: %(message)s',
-    datefmt='%H:%M:%S'
+    level=cfg.logging.get_level(),
+    format=cfg.logging.format,
+    datefmt=cfg.logging.date_format
 )
 logger = logging.getLogger(__name__)
 
