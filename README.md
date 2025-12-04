@@ -198,9 +198,9 @@ We conducted three trials under two different camera field-of-view settings: 60Â
 
 2. 
 
+### Summary Flow Chart
 
-Include a summary flow chart of how different components in your
-implementation interface with each other. What messages or data is passed between components?
+
 
 ## Results
 
