@@ -70,12 +70,12 @@ The final deliverable is a team of differential-drive robots that collaborativel
 #### File Structure
 
 ```
-Version_8/
+ecse275-final-astar-search/
 ├── Final_project_main.py          # Main execution script
 ├── FP_funcs.py                    # Core function library
-├── Verision_8.txt                 # Project notes
+├── config.py                      # Centralized configuration
 ├── final_project.ttt              # CoppeliaSim scene file
-└── __pycache__/                   # Python cache directory
+└── coppeliasim_script/            # Lua scripts for robots
 ```
 
 #### Dependencies
