@@ -226,6 +226,18 @@ FOV = 120
 | 2    | 40.75                  | 70.47                 |
 | 3    | 43.64                  | 72.54                 |
 
+
+2. Variable Map Resolution
+
+| Resolution | Cell Size | Grid Cells | Time |
+|------------|-----------|------------|------|
+| 25         | 0.4m      | 625        | 42 sec |
+| 50         | 0.2m      | 2,500      | 45 sec |
+| 100        | 0.1m      | 10,000     | 43 sec |
+| 150        | ~0.067m   | 22,500     | 42 sec |
+| 250        | 0.04m     | 62,500     | 43 sec |
+| 500        | 0.02m     | 250,000    | Failed to search |
+
 ### Success
 
 Overall, our implementation was successful. The system is able to detect obstacles and different terrain types, dynamically update A-Star paths, communicate shared maps between robots, and successfully navigate to the designated goals.
