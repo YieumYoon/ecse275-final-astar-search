@@ -22,7 +22,7 @@ This project implements a comprehensive robot navigation system that combines mu
   - Depth map extraction and conversion
   - Color-based object detection (red, green, blue)
   - Centroid calculation from color masks
-  - Pixel-to-world coordinate transformation
+  - Pixel-to-robot-to-world coordinate transformation
 
 - **LiDAR Processing**
   - FastHokuyo LiDAR data acquisition
