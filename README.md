@@ -194,13 +194,9 @@ Adjust color threshold in `mask_color()` function (default: 20-point margin)
 #### LiDAR Segmentation
 Groups consecutive points if distance < threshold, separating distinct objects
 
+### Conclusion
 
-### Experiments and Data
-
-What experiments did you conduct and what data did you gather to measure the performance
-of the system or define success? Include a summary flow chart of how different components in your
-implementation interface with each other. What messages or data is passed between components?
-
+Multiple mobile robots equipped with LiDAR and vision sensing can successfully navigate a complex environment together using A Star planning. This approach could be utilized to develop swarms of small, affordable rescue robots who could rapidly sweep a disaster site in a efficient manner.
 
 ## Future Enhancements
 
