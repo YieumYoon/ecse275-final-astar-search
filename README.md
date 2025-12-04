@@ -2,6 +2,9 @@
 
 A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, vision sensing and processing, and A-star pathfinding for autonomous robot navigation.
 
+## Video(GIFs)
+![alt text](275video_720p.gif)
+
 ## Team Members and Roles
 
 - Halasyam Visvanathan (Primary Developer - A-Star Path Planning)
