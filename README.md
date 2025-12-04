@@ -362,6 +362,8 @@ Overall, our implementation was successful. The system is able to detect obstacl
 - Check map resolution matches world size
 - Ensure terrain costs are properly set
 
+## Conclusion
+
 ### Future Enhancements
 
 1. **Multi-Robot System**
@@ -380,5 +382,3 @@ Overall, our implementation was successful. The system is able to detect obstacl
    - Dynamic path replanning
    - Multi-robot path coordination
    - Adaptive map resolution
-
-## Conclusion
