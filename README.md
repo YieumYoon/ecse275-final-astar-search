@@ -1,6 +1,10 @@
-# Robot Navigation and Vision System
+# Multisensor Navigation System for Search-and-Rescue Robots
 
 A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, vision processing, terrain mapping, and A* pathfinding for autonomous robot navigation.
+
+## Team Members and Roles
+
+
 
 ## Project Overview
 
