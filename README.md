@@ -4,10 +4,10 @@ A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, visi
 
 ## Team Members and Roles
 
-- Halasyam Visvanathan (Primary Developer - A-Star Path Planning, Testing)
-- Amos Langsner (Primary Developer - Vision Sensing, Write-up)
-- Abigail Todd (Primary Developer - Environment Building and Depth Sensing, Write-up)
-- Junsu Lee (Primary Developer - Integration, Testing)
+- Halasyam Visvanathan (Primary Developer - A-Star Path Planning)
+- Amos Langsner (Primary Developer - Vision Sensing)
+- Abigail Todd (Primary Developer - Environment Building and Depth Sensing)
+- Junsu Lee (Primary Developer - Integration)
 
 ## Introduction
 
@@ -111,7 +111,7 @@ conda activate ecse275env
 
 #### Usage
 
-1. **Start CoppeliaSim** and load the scene file `final_project (1).ttt`
+1. **Start CoppeliaSim** and load the scene file `final_project.ttt`
 
 2. **Run the main script:**
 
@@ -164,8 +164,13 @@ python Final_project_main.py
 
 - `astar()` - A\* pathfinding algorithm implementation
 - `heuristic()` - Euclidean distance calculation
-- `get_neighbors()` - Get valid neighboring cells
-- `a_star_path_to_coppelia_points()` - Convert path to CoppeliaSim format
+- `get_neighbors()` - Get valid neighboring cells (4 or 8 connected)
+- `get_neighbors_4connected()` - Get cardinal neighbors (up/down/left/right)
+- `get_neighbors_8connected()` - Get all neighbors including diagonals
+- `has_line_of_sight()` - Check clear path between two cells (Bresenham's algorithm)
+- `smooth_path()` - Remove unnecessary waypoints using line-of-sight
+- `smooth_path_with_terrain()` - Smooth path while avoiding high-cost terrain
+
 
 #### Terrain System
 
