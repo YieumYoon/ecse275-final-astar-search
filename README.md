@@ -42,6 +42,8 @@ This project implements a comprehensive robot navigation system that combines mu
   - Euclidean distance heuristic
   - World-to-map coordinate conversion
 
+![A Star Planning](A Star Planning.png)
+
 ## File Structure
 
 ```
