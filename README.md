@@ -196,11 +196,94 @@ Groups consecutive points if distance < threshold, separating distinct objects
 1. Variable Field-of-View (FOV)
 We conducted three trials under two different camera field-of-view settings: 60° and 120°. In each trial, we recorded the time taken to reach the first goal and the time taken to reach all goals. This data allowed us to quantify how FOV impacts navigation efficiency and overall system performance.
 
-2. 
+2. Variable Map Resolution
+
 
 ### Summary Flow Chart
 
+The following diagram illustrates how different components in the implementation interface with each other, showing the data flow and messages passed between modules:
 
+```mermaid
+flowchart TB
+    subgraph CoppeliaSim["CoppeliaSim"]
+        Robots["Robots"]
+        LiDAR["LiDAR Sensors"]
+        Vision["Vision Sensors"]
+        LuaCtrl["Lua Controller"]
+    end
+
+    subgraph Python["Python Controller"]
+        ZMQ["ZMQ API"]
+        SharedMap["Shared World Map"]
+        GoalTracker["Goal Tracker"]
+    end
+
+    subgraph Sensing["Sensor Processing"]
+        LiDARProc["LiDAR Processing"]
+        VisionProc["Vision Processing"]
+        CoordTrans["Coordinate Transform"]
+    end
+
+    subgraph Planning["Path Planning"]
+        TerrainMap["Terrain Mapping"]
+        subgraph AStarDetail["A* Pathfinding"]
+            Start["Start Position"]
+            OpenSet["Priority Queue<br/>(open set)"]
+            GetNeighbors["Get Neighbors<br/>(4 or 8 connected)"]
+            CalcCost["Calculate Costs<br/>g = movement + terrain<br/>h = Euclidean distance<br/>f = g + h"]
+            CheckGoal{"Goal<br/>Reached?"}
+            PathFound["Reconstruct Path"]
+        end
+    end
+
+    %% Connections
+    ZMQ <-->|"Robot positions,<br/>sensor data"| CoppeliaSim
+    
+    LiDAR -->|"Point cloud"| LiDARProc
+    Vision -->|"RGB + Depth"| VisionProc
+    
+    LiDARProc -->|"Obstacle locations"| CoordTrans
+    VisionProc -->|"Terrain colors"| CoordTrans
+    CoordTrans -->|"World coordinates"| TerrainMap
+    
+    TerrainMap -->|"Updates"| SharedMap
+    SharedMap -->|"Grid + costs"| Start
+    GoalTracker -->|"Target position"| Start
+    
+    %% A* internal flow
+    Start --> OpenSet
+    OpenSet --> GetNeighbors
+    GetNeighbors --> CalcCost
+    CalcCost --> CheckGoal
+    CheckGoal -->|"No"| OpenSet
+    CheckGoal -->|"Yes"| PathFound
+    
+    PathFound -->|"Waypoint path"| LuaCtrl
+    LuaCtrl -->|"Motor commands"| Robots
+    LuaCtrl -->|"Goal reached"| GoalTracker
+```
+
+#### Key Data Flows:
+
+| Source | Destination | Data/Message |
+|--------|-------------|--------------|
+| LiDAR Sensor | LiDAR Processing | 3D point cloud (x, y, z) |
+| Vision Sensor | Vision Processing | RGB image + depth buffer |
+| Sensor Processing | Terrain Mapping | World coordinates of obstacles & terrain |
+| Terrain Mapping | A* Pathfinding | Grid map with terrain costs |
+| A* Pathfinding | Lua Controller | Waypoint path [(x, y), ...] |
+| Lua Controller | Goal Tracker | Goal completion status |
+
+#### A* Pathfinding Details:
+
+| Component | Description |
+|-----------|-------------|
+| **Priority Queue** | Min-heap ordered by f-cost, stores nodes to explore |
+| **g-cost** | Actual cost from start: movement cost (1.0 cardinal, √2 diagonal) + terrain cost |
+| **h-cost** | Heuristic: Euclidean distance to goal |
+| **f-cost** | Total estimated cost: f = g + h |
+| **Neighbors** | 4-connected (up/down/left/right) or 8-connected (includes diagonals) |
+| **Terrain Costs** | Floor: 0, Grass: 2, Sand: 4, Water: 8, Obstacle: ∞ |
 
 ## Results
 
