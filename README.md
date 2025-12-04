@@ -32,24 +32,14 @@ The final deliverable is a team of differential-drive robots that collaborativel
 
 ## Approach
 
-### Building Blocks and Implementation
+### Building Blocks
 
+- **LiDAR Processing**
+  - FastHokuyo LiDAR data acquisition
+  - Obstacle detection and clustering
+  - Sensor-to-world coordinate transformation
 
-What are the main “building blocks” of your system? How did you implement each of them? Why did you
-choose to implement them this way? How did the ECSE 275 concepts you learned inform your approach to
-each part? 
-
-What experiments did you conduct and what data did you gather to measure the performance
-of the system or define success? Include a summary flow chart of how different components in your
-implementation interface with each other. What messages or data is passed between components?
---
-
-
-
-
-
-
-## Features
+![LiDAR Sensing](Lidar.jpg)
 
 - **Vision Sensor Processing**
   - RGB image capture and processing (256×256 resolution)
@@ -57,14 +47,6 @@ implementation interface with each other. What messages or data is passed betwee
   - Color-based object detection (red, green, blue)
   - Centroid calculation from color masks
   - Pixel-to-robot-to-world coordinate transformation
-
-- **LiDAR Processing**
-  - FastHokuyo LiDAR data acquisition
-  - Point cloud segmentation
-  - Obstacle detection and clustering
-  - Sensor-to-world coordinate transformation
-
-![LiDAR Sensing](Lidar.jpg)
 
 - **Terrain Mapping**
   - Dynamic map creation with configurable resolution
@@ -82,18 +64,20 @@ implementation interface with each other. What messages or data is passed betwee
 
 ![A Star](AStarIMG.jpg)
 
-## File Structure
+### Implementation
+
+#### File Structure
 
 ```
-Version_8_needs_consildation/
+Version_8/
 ├── Final_project_main.py          # Main execution script
 ├── FP_funcs.py                    # Core function library
-├── Verision_8_unconsolidated.txt  # Project notes
-├── final_project (1).ttt          # CoppeliaSim scene file
+├── Verision_8.txt                 # Project notes
+├── final_project.ttt              # CoppeliaSim scene file
 └── __pycache__/                   # Python cache directory
 ```
 
-## Dependencies
+#### Dependencies
 
 - **Python Libraries:**
   - `numpy` - Numerical computations and array operations
@@ -104,7 +88,7 @@ Version_8_needs_consildation/
 - **CoppeliaSim:**
   - `coppeliasim_zmqremoteapi_client` - ZMQ Remote API for CoppeliaSim communication
 
-## Installation
+#### Installation
 
 1. Install Python dependencies:
 ```bash
@@ -120,7 +104,7 @@ pip install numpy matplotlib
 conda activate ecse275env
 ```
 
-## Usage
+#### Usage
 
 1. **Start CoppeliaSim** and load the scene file `final_project (1).ttt`
 
@@ -137,9 +121,7 @@ python Final_project_main.py
    - Build terrain map
    - Display processed images
 
-## Core Components
-
-### Main Script (`Final_project_main.py`)
+#### Main Script (`Final_project_main.py`)
 
 - Establishes ZMQ connection to CoppeliaSim
 - Initializes robot, sensors, and goal position
@@ -148,7 +130,7 @@ python Final_project_main.py
 - Performs color-based object detection
 - Transforms coordinates between sensor and world frames
 
-### Function Library (`FP_funcs.py`)
+#### Function Library (`FP_funcs.py`)
 
 #### Vision Processing Functions
 - `process_vision_Sensor_RBG()` - Extract RGB images
@@ -184,49 +166,38 @@ python Final_project_main.py
   - Water: cost 8
   - Obstacle: cost ∞
 
-## Configuration
-
-### Map Resolution
+#### Map Resolution
 Default resolution is 100×100 cells covering a 10×10 meter world:
 ```python
 Resolution = 100
 R = 10/Resolution  # Cell size = 0.1m
 ```
 
-### Sensor Parameters
+#### Sensor Parameters
 - **Vision Sensor:** 256×256 pixels, 60° FOV
 - **LiDAR:** FastHokuyo with segmentation threshold of 0.2m
 
-### Color Detection
+#### Color Detection
 Adjust color threshold in `mask_color()` function (default: 20-point margin)
 
-## Algorithms
+#### Algorithms
 
-### A* Pathfinding
+#### A* Pathfinding
 - **Graph:** 4-connected grid
 - **Cost Function:** g(n) = movement_cost + terrain_cost
 - **Heuristic:** h(n) = Euclidean distance to goal
 - **Priority:** f(n) = g(n) + h(n)
 
-### LiDAR Segmentation
+#### LiDAR Segmentation
 Groups consecutive points if distance < threshold, separating distinct objects
 
-## Current Status
 
-**Version 8 - Unconsolidated**
+### Experiments and Data
 
-The current version contains all necessary interface tools for:
-- Sensor data processing
-- Map building and updating
-- Object detection and localization
-- Pathfinding algorithms
+What experiments did you conduct and what data did you gather to measure the performance
+of the system or define success? Include a summary flow chart of how different components in your
+implementation interface with each other. What messages or data is passed between components?
 
-**Remaining Tasks:**
-- GitHub repository setup
-- Multi-robot coordination
-- Dynamic robot/camera switching for A* optimization
-- Real-time map update integration
-- Full system integration and testing
 
 ## Future Enhancements
 
