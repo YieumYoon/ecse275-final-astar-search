@@ -32,12 +32,14 @@ The final deliverable is a team of differential-drive robots that collaborativel
 
 ## Approach
 
-### Building Blocks
+### Building Blocks and Implementation
 
-Approach
+
 What are the main “building blocks” of your system? How did you implement each of them? Why did you
 choose to implement them this way? How did the ECSE 275 concepts you learned inform your approach to
-each part? What experiments did you conduct and what data did you gather to measure the performance
+each part? 
+
+What experiments did you conduct and what data did you gather to measure the performance
 of the system or define success? Include a summary flow chart of how different components in your
 implementation interface with each other. What messages or data is passed between components?
 --
