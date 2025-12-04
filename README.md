@@ -30,11 +30,15 @@ This project implements a comprehensive robot navigation system that combines mu
   - Obstacle detection and clustering
   - Sensor-to-world coordinate transformation
 
+![LiDAR Sensing](Lidar.jpg)
+
 - **Terrain Mapping**
   - Dynamic map creation with configurable resolution
   - Multiple terrain types (floor, grass, sand, water, obstacle)
   - Terrain cost assignment for pathfinding
   - Real-time map updates based on sensor data
+ 
+![Robot Environment](Map.jpg)
 
 - **A* Pathfinding**
   - 4-connected grid navigation
