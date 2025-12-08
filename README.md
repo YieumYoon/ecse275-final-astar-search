@@ -261,14 +261,17 @@ flowchart TB
     LuaCtrl -->|"Goal reached"| GoalTracker
 ```
 
-### Testing
+### Testing to Measure Performance
 
-1. Variable Field-of-View (FOV)
-   We conducted three trials under two different camera field-of-view settings: 60° and 120°. In each trial, we recorded the time taken to reach the first goal and the time taken to reach all goals. This data allowed us to quantify how FOV impacts navigation efficiency and overall system performance.
+**Variable Field-of-View (FOV)**
+Three trials were conducted under two different camera FOV settings: 60° and 120°. For each trial, the time to reach the first goal and the time to reach all goals were recorded. This data quantified the impact of FOV on navigation efficiency and overall system performance, identifying an optimal FOV. 
 
-2. Variable Map Resolution
-   We tested how map resolution affects navigation performance and A\* pathfinding reliability. Resolution determines the cell size of the occupancy grid—higher resolutions create finer grids with smaller cells. While finer grids can represent obstacles more precisely, extremely high resolutions (like 500) cause the cell size to become smaller than the robot's physical dimensions, leading to path tracking errors and collisions.
-   (here)
+**Variable Map Resolution**
+Navigation performance and A-Star pathfinding reliability were evaluated across map resolutions ranging from 25×25 to 500×500 cells. Resolution determines the size of cells in the occupancy grid:
+- Very low resolutions reduce computational cost but can oversimplify the environment, causing imprecise obstacle representation.
+- Higher resolutions create finer grids, allowing more precise representation of obstacles.
+- Extremely high resolutions produce cells smaller than the robot’s physical dimensions, which can lead to path-tracking errors and potential collisions.
+This test helped identify an optimal resolution that balances map detail with reliable navigation performance.
 
 ## Results
 
@@ -276,7 +279,7 @@ flowchart TB
 
 ### Data
 
-1. Variable Field-of-View (FOV)
+**Variable Field-of-View (FOV) Test**
 
 FOV = 60
 
@@ -294,7 +297,7 @@ FOV = 120
 | 2    | 40.75                  | 70.47                 |
 | 3    | 43.64                  | 72.54                 |
 
-2. Variable Map Resolution
+**Variable Map Resolution Test**
 
 | Resolution | Cell Size (m) | Grid Cells | Time (s)         |
 | ---------- | ------------- | ---------- | ---------------- |
