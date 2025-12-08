@@ -49,22 +49,20 @@ The final deliverable is a team of differential-drive robots that collaborativel
 - **LiDAR Processing**
   - FastHokuyo LiDAR data acquisition
   - Obstacle detection and clustering
-  - Sensor-to-world coordinate transformation
+  - Robot-to-world coordinate transformation
 
 ![LiDAR Sensing](media/Lidar.jpg)
 
 - **Vision Sensor Processing**
-
   - RGB image capture and processing (256×256 resolution)
-  - Depth map extraction and conversion
   - Color-based object detection (red, green, blue)
   - Centroid calculation from color masks
   - Pixel-to-robot-to-world coordinate transformation
 
 - **Terrain Mapping**
   - Dynamic map creation with configurable resolution
-  - Multiple terrain types (floor, grass, sand, water, obstacle)
-  - Terrain cost assignment for pathfinding
+  - Classification of terrain types (floor, grass, sand, water) and obstacles
+  - Assignment of traversal costs for pathfinding
   - Real-time map updates based on sensor data
 
 ![Robot Environment](media/Map.jpg)
