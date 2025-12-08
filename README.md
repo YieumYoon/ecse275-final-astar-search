@@ -184,8 +184,8 @@ Resolution = 100
 R = 10/Resolution  # Cell size = 0.1m
 ```
 - **Sensor Parameters**
-  - LiDAR: FastHokuyo with segmentation threshold of 0.2m
-  - Vision Sensor: 256×256 pixels, 60° field of vision
+  - **LiDAR**: FastHokuyo with segmentation threshold of 0.2m
+  - **Vision Sensor**: 256×256 pixels, 60° field of vision
 - **Color Detection**
   - Adjust color threshold in `mask_color()` function (default: 20-point margin)
 - **Algorithms**
