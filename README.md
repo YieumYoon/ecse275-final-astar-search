@@ -82,20 +82,19 @@ ecse275-final-astar-search/
 
 - **Python Libraries:**
 
-  - `numpy` - Numerical computations and array operations
-  - `matplotlib` - Image visualization
-  - `math` - Mathematical operations
-  - `heapq` - Priority queue for A\* algorithm
+  - `numpy` - Numeric operations, masks, arrays, LiDAR processing
+  - `matplotlib` - Plotting, debug visualizations
+  - `coppeliasim-zmqremoteapi-client` -  ZMQ Remote API for communication with CoppeliaSim
 
 - **CoppeliaSim:**
-  - `coppeliasim_zmqremoteapi_client` - ZMQ Remote API for CoppeliaSim communication
+  - ZMQ Remote API
 
 #### Installation
 
 1. Install Python dependencies:
 
 ```bash
-pip install numpy matplotlib
+pip install numpy matplotlib coppeliasim-zmqremoteapi-client
 ```
 
 2. Install CoppeliaSim and the ZMQ Remote API:
