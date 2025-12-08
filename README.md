@@ -59,7 +59,7 @@ The final deliverable is a team of differential-drive robots that collaborativel
   - Centroid calculation from color masks
   - Pixel-to-robot-to-world coordinate transformation
 
-- **Terrain Mapping**
+- **Environment Mapping**
   - Dynamic map creation with configurable resolution
   - Classification of terrain types (floor, grass, sand, water) and obstacles
   - Assignment of traversal costs for pathfinding
@@ -67,7 +67,7 @@ The final deliverable is a team of differential-drive robots that collaborativel
 
 ![Robot Environment](media/Map.jpg)
 
-- **A\* Pathfinding**
+- **A-Star Pathfinding**
   - 4-connected grid navigation
   - Terrain-aware cost function
   - Euclidean distance heuristic
