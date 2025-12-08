@@ -150,32 +150,25 @@ python Final_project_main.py
     - `compute_pos_from_pix()` - Convert pixel coordinates to 3D positions
     - `mask_color()` - Create binary mask for target color
     - `centroid_from_mask()` - Calculate centroid of detected objects
-     - `depth_from_rgb_mask()` - Extract depth values from masked regions
-
-#### LiDAR Processing Functions
-
-- `process_Lidar_depth()` - Process LiDAR measurements
-- `segment_lidar()` - Segment point cloud based on distance threshold
-- `transform_point()` - Transform points using transformation matrix
-
-#### Mapping Functions
-
-- `createMap_withResolution()` - Initialize terrain map
-- `Update_map()` - Update map with detected terrain objects
-- `Convert_world_to_map()` - World to map coordinate conversion
-- `Convert_map_to_world()` - Map to world coordinate conversion
-
-#### Pathfinding Functions
-
-- `astar()` - A\* pathfinding algorithm implementation
-- `heuristic()` - Euclidean distance calculation
-- `get_neighbors()` - Get valid neighboring cells (4 or 8 connected)
-- `get_neighbors_4connected()` - Get cardinal neighbors (up/down/left/right)
-- `get_neighbors_8connected()` - Get all neighbors including diagonals
-- `has_line_of_sight()` - Check clear path between two cells (Bresenham's algorithm)
-- `smooth_path()` - Remove unnecessary waypoints using line-of-sight
-- `smooth_path_with_terrain()` - Smooth path while avoiding high-cost terrain
-
+    - `depth_from_rgb_mask()` - Extract depth values from masked regions
+  - **LiDAR Processing Functions**
+    - `process_Lidar_depth()` - Process LiDAR measurements
+    - `segment_lidar()` - Segment point cloud based on distance threshold
+    - `transform_point()` - Transform points using transformation matrix
+  - **Mapping Functions**
+    - `createMap_withResolution()` - Initialize terrain map
+    - `Update_map()` - Update map with detected terrain objects
+    - `Convert_world_to_map()` - World to map coordinate conversion
+    - `Convert_map_to_world()` - Map to world coordinate conversion
+  - **Pathfinding Functions**
+    - `astar()` - A\* pathfinding algorithm implementation
+    - `heuristic()` - Euclidean distance calculation
+    - `get_neighbors()` - Get valid neighboring cells (4 or 8 connected)
+    - `get_neighbors_4connected()` - Get cardinal neighbors (up/down/left/right)
+    - `get_neighbors_8connected()` - Get all neighbors including diagonals
+    - `has_line_of_sight()` - Check clear path between two cells (Bresenham's algorithm)
+    - `smooth_path()` - Remove unnecessary waypoints using line-of-sight
+    - `smooth_path_with_terrain()` - Smooth path while avoiding high-cost terrain
 
 #### Terrain System
 
