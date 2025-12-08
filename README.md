@@ -380,11 +380,10 @@ The simulation successfully integrates LiDAR and vision sensing to gather enviro
 
 2. **Advanced Perception**
 
-   - Real-time obstacle avoidance
-   - Dynamic object tracking
-   - Improved terrain classification
+   - Dynamic object tracking (track object velocity and acceleration)
+   - Improved terrain classification (edge detection)
 
-3. **Optimized Planning**
-   - Dynamic path replanning
-   - Multi-robot path coordination
-   - Adaptive map resolution
+3. **Increased environment complexity**
+   - Larger obstacle variety
+   - Increased map resolution
+   - Dynamic objects
