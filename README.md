@@ -15,7 +15,7 @@ A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, visi
 
 The motivation behind this project is to investigate how autonomous robots can reliably navigate complex, uncertain environments, which is an essential capability for real-world applications, especially with the rise of autonomous robots in our society, on the road, in warehouses, and in as search-and-rescue operations.
 
-![Rescue Robot](RescueRobotIMG1.jpg)
+![Rescue Robot](media/RescueRobotIMG1.jpg)
 
 ### ECSE275 Robotics Concepts
 
@@ -39,7 +39,7 @@ The final deliverable is a team of differential-drive robots that collaborativel
   - Obstacle detection and clustering
   - Sensor-to-world coordinate transformation
 
-![LiDAR Sensing](Lidar.jpg)
+![LiDAR Sensing](media/Lidar.jpg)
 
 - **Vision Sensor Processing**
 
@@ -55,7 +55,7 @@ The final deliverable is a team of differential-drive robots that collaborativel
   - Terrain cost assignment for pathfinding
   - Real-time map updates based on sensor data
 
-![Robot Environment](Map.jpg)
+![Robot Environment](media/Map.jpg)
 
 - **A\* Pathfinding**
   - 4-connected grid navigation
@@ -63,7 +63,7 @@ The final deliverable is a team of differential-drive robots that collaborativel
   - Euclidean distance heuristic
   - World-to-map coordinate conversion
 
-![A Star](AStarIMG.jpg)
+![A Star](media/AStarIMG.jpg)
 
 ### Implementation
 
@@ -310,7 +310,7 @@ flowchart TB
 
 ## Results
 
-![alt text](275video_720p.gif)
+![alt text](media/275video_720p.gif)
 
 ### Data
 
