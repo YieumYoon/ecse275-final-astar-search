@@ -324,44 +324,37 @@ Lower resolutions (25–50) produced coarse maps that allowed fast path planning
 
 Overall, our implementation was successful. The system is able to detect obstacles and different terrain types, dynamically update A-Star paths, communicate shared maps between robots, and successfully navigate to the designated goals.
 
-#### Troubleshooting
-
-#### Connection Issues
-
-- Ensure CoppeliaSim is running before executing the script
-- Verify ZMQ Remote API is properly installed
-- Check that scene contains required objects with correct names
-
-#### Coordinate System
-
-- All transformations use CoppeliaSim's 3×4 transformation matrices
-- World frame origin is at (0, 0, 0)
-- Map assumes world center at map center
-
-#### Pathfinding
-
-- Verify start and goal positions are not obstacles
-- Check map resolution matches world size
-- Ensure terrain costs are properly set
+**Some areas of struggle include:**
+- Connection Issues
+  - Ensuring CoppeliaSim is running before executing the script
+  - Verifying ZMQ Remote API is properly installed
+  - Checking the scene contains required objects with correct names
+- Coordinate System
+  - Using CoppeliaSim's 3×4 transformation matrices for all conversions
+  - Defining the world frame origin at (0, 0, 0)
+  - Assuming the map is centered at the world frame origin
+- Pathfinding
+  - Verifying start and goal positions are not obstacles
+  - Checking map resolution matches world size
+  - Ensuring terrain costs are properly set
 
 ## Conclusion
 
-The simulation successfully integrates LiDAR and vision sensing to gather environmental data and construct a map. A team of robots utilize a dynamic A-Star algorithm to plan paths and efficiently reach their goals, demonstrating coordinated navigation and adaptability within the environment. While additional validation and testing is necessary, this demonstration supports the argument for the use of multiple coordinated mobile robots as an efficient way to rapidly explore an environment and construct a map.
+The simulation successfully integrates LiDAR and vision sensing to gather environmental data and construct a map. A team of robots utilizes a dynamic A-Star algorithm to plan paths and efficiently reach their goals, demonstrating coordinated navigation and adaptability within the environment. Testing validated that a camera field of vision of 60° and a map resolution of 100×100 cells provide reliable navigation and accurate mapping. While additional validation and testing are necessary, this demonstration supports the use of multiple coordinated mobile robots as an efficient method for rapidly exploring an environment and constructing a map.
 
-### Future Enhancements
+### Future Enhancements to Further Develop and Improve
 
 1. **Multi-Robot System**
 
-   - Coordinate 3, 4, 5 robots
-   - Dynamic task allocation
-   - Shared map updates
+- Increase the number of robots to 3, 4, or 5 to improve exploration speed and map coverage.
+- Implement dynamic task allocation to optimize robot roles and minimize redundancy.
 
 2. **Advanced Perception**
 
-   - Dynamic object tracking (track object velocity and acceleration)
-   - Improved terrain classification (edge detection)
+- Add dynamic object tracking to account for moving obstacles.
+- Improve terrain classification using edge detection to enhance path planning accuracy.
 
 3. **Increased environment complexity**
-   - Larger obstacle variety
-   - Increased map resolution
-   - Dynamic objects
+
+- Introduce a larger variety of obstacles to better test system robustness.
+- Include dynamic objects to evaluate system adaptability in real-world scenarios.
