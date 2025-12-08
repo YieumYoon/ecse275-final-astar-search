@@ -344,17 +344,14 @@ The simulation successfully integrates LiDAR and vision sensing to gather enviro
 
 ### Future Enhancements to Further Develop and Improve
 
-1. **Multi-Robot System**
+- **Multi-Robot System**
+  - Increase the number of robots to 3, 4, or 5 to improve exploration speed and map coverage.
+  - Implement dynamic task allocation to optimize robot roles and minimize redundancy.
 
-- Increase the number of robots to 3, 4, or 5 to improve exploration speed and map coverage.
-- Implement dynamic task allocation to optimize robot roles and minimize redundancy.
+- **Advanced Perception**
+  - Add dynamic object tracking to account for moving obstacles.
+  - Improve terrain classification using edge detection to enhance path planning accuracy.
 
-2. **Advanced Perception**
-
-- Add dynamic object tracking to account for moving obstacles.
-- Improve terrain classification using edge detection to enhance path planning accuracy.
-
-3. **Increased environment complexity**
-
-- Introduce a larger variety of obstacles to better test system robustness.
-- Include dynamic objects to evaluate system adaptability in real-world scenarios.
+- **Increased environment complexity**
+  - Introduce a larger variety of obstacles to better test system robustness.
+  - Include dynamic objects to evaluate system adaptability in real-world scenarios.
