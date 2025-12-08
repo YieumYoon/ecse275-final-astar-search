@@ -169,21 +169,16 @@ python Final_project_main.py
     - `has_line_of_sight()` - Check clear path between two cells (Bresenham's algorithm)
     - `smooth_path()` - Remove unnecessary waypoints using line-of-sight
     - `smooth_path_with_terrain()` - Smooth path while avoiding high-cost terrain
-
-#### Terrain System
-
-- `terrain` class - Represents map cells with terrain properties
-- `TerrainType` enum - Defines terrain types and costs
-  - Floor: cost 0
-  - Grass: cost 2
-  - Sand: cost 4
-  - Water: cost 8
-  - Obstacle: cost ∞
-
-#### Map Resolution
-
-Default resolution is 100×100 cells covering a 10×10 meter world:
-
+- **Terrain System**
+  - `terrain` class - Represents map cells with terrain properties
+  - `TerrainType` enum - Defines terrain types and costs
+   - Floor: cost 0
+    - Grass: cost 2
+    - Sand: cost 4
+    - Water: cost 8
+    - Obstacle: cost ∞
+- **Map Resolution**
+  - Default resolution is 100×100 cells covering a 10×10 meter world:
 ```python
 Resolution = 100
 R = 10/Resolution  # Cell size = 0.1m
