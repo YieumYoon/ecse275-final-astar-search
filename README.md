@@ -197,18 +197,9 @@ R = 10/Resolution  # Cell size = 0.1m
   - **LiDAR Segmentation**
     - Groups consecutive points if distance < threshold, separating distinct objects
 
-### Testing
-
-1. Variable Field-of-View (FOV)
-   We conducted three trials under two different camera field-of-view settings: 60° and 120°. In each trial, we recorded the time taken to reach the first goal and the time taken to reach all goals. This data allowed us to quantify how FOV impacts navigation efficiency and overall system performance.
-
-2. Variable Map Resolution
-   We tested how map resolution affects navigation performance and A\* pathfinding reliability. Resolution determines the cell size of the occupancy grid—higher resolutions create finer grids with smaller cells. While finer grids can represent obstacles more precisely, extremely high resolutions (like 500) cause the cell size to become smaller than the robot's physical dimensions, leading to path tracking errors and collisions.
-   (here)
-
 ### Summary Flow Chart
 
-The following diagram illustrates how different components in the implementation interface with each other, showing the data flow and messages passed between modules:
+The following diagram illustrates how different components in the implementation interface with each other, showing the data flow and messages passed between them:
 
 ```mermaid
 flowchart TB
@@ -269,6 +260,15 @@ flowchart TB
     LuaCtrl -->|"Motor commands"| Robots
     LuaCtrl -->|"Goal reached"| GoalTracker
 ```
+
+### Testing
+
+1. Variable Field-of-View (FOV)
+   We conducted three trials under two different camera field-of-view settings: 60° and 120°. In each trial, we recorded the time taken to reach the first goal and the time taken to reach all goals. This data allowed us to quantify how FOV impacts navigation efficiency and overall system performance.
+
+2. Variable Map Resolution
+   We tested how map resolution affects navigation performance and A\* pathfinding reliability. Resolution determines the cell size of the occupancy grid—higher resolutions create finer grids with smaller cells. While finer grids can represent obstacles more precisely, extremely high resolutions (like 500) cause the cell size to become smaller than the robot's physical dimensions, leading to path tracking errors and collisions.
+   (here)
 
 ## Results
 
