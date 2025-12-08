@@ -183,28 +183,19 @@ python Final_project_main.py
 Resolution = 100
 R = 10/Resolution  # Cell size = 0.1m
 ```
-
-#### Sensor Parameters
-
-- **Vision Sensor:** 256×256 pixels, 60° FOV
-- **LiDAR:** FastHokuyo with segmentation threshold of 0.2m
-
-#### Color Detection
-
-Adjust color threshold in `mask_color()` function (default: 20-point margin)
-
-#### Algorithms
-
-#### A\* Pathfinding
-
-- **Graph:** 4-connected grid
-- **Cost Function:** g(n) = movement_cost + terrain_cost
-- **Heuristic:** h(n) = Euclidean distance to goal
-- **Priority:** f(n) = g(n) + h(n)
-
-#### LiDAR Segmentation
-
-Groups consecutive points if distance < threshold, separating distinct objects
+- **Sensor Parameters**
+  - **LiDAR:** FastHokuyo with segmentation threshold of 0.2m
+  - **Vision Sensor:** 256×256 pixels, 60° field of vision
+- **Color Detection**
+  - Adjust color threshold in `mask_color()` function (default: 20-point margin)
+- **Algorithms**
+  - **A-Star Pathfinding**
+    - **Graph:** 4-connected grid
+    - **Cost Function:** g(n) = movement_cost + terrain_cost
+    - **Heuristic:** h(n) = Euclidean distance to goal
+    - **Priority:** f(n) = g(n) + h(n)
+  - **LiDAR Segmentation**
+    - Groups consecutive points if distance < threshold, separating distinct objects
 
 ### Testing
 
