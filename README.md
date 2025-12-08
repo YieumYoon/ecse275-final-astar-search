@@ -285,7 +285,7 @@ The following GIF shows the robot navigating the environment, detecting obstacle
 
 ![alt text](media/275video_720p.gif)
 
-### Data
+### Data from Testing
 
 **Variable Field-of-View (FOV) Test**
 
@@ -305,6 +305,8 @@ FOV = 120
 | 2    | 40.75                  | 70.47                 |
 | 3    | 43.64                  | 72.54                 |
 
+With a narrower 60° FOV, the robot reached the first goal slightly slower on average but completed all goals more efficiently compared to a 120° FOV. The wider 120° FOV provided a larger view, which increased the time to reach all goals due to processing more visual information and potentially overestimating obstacles.
+
 **Variable Map Resolution Test**
 
 | Resolution | Cell Size (m) | Grid Cells | Time (s)         |
@@ -315,6 +317,8 @@ FOV = 120
 | 150        | ~0.067        | 22,500     | 42               |
 | 250        | 0.04          | 62,500     | 43               |
 | 500        | 0.02          | 250,000    | Failed to search |
+
+Lower resolutions (25–50) produced coarse maps that allowed fast path planning but lacked detail, while moderate resolutions (100–250) balanced accuracy and efficiency, resulting in reliable navigation. Extremely high resolution (500) caused the path planner to fail because the grid cells became smaller than the robot, leading to path and computational issues.
 
 ### Success
 
