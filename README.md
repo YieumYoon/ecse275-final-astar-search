@@ -270,28 +270,6 @@ flowchart TB
     LuaCtrl -->|"Goal reached"| GoalTracker
 ```
 
-#### Key Data Flows:
-
-| Source            | Destination       | Data/Message                             |
-| ----------------- | ----------------- | ---------------------------------------- |
-| LiDAR Sensor      | LiDAR Processing  | 3D point cloud (x, y, z)                 |
-| Vision Sensor     | Vision Processing | RGB image + depth buffer                 |
-| Sensor Processing | Terrain Mapping   | World coordinates of obstacles & terrain |
-| Terrain Mapping   | A\* Pathfinding   | Grid map with terrain costs              |
-| A\* Pathfinding   | Lua Controller    | Waypoint path [(x, y), ...]              |
-| Lua Controller    | Goal Tracker      | Goal completion status                   |
-
-#### A\* Pathfinding Details:
-
-| Component          | Description                                                                      |
-| ------------------ | -------------------------------------------------------------------------------- |
-| **Priority Queue** | Min-heap ordered by f-cost, stores nodes to explore                              |
-| **g-cost**         | Actual cost from start: movement cost (1.0 cardinal, √2 diagonal) + terrain cost |
-| **h-cost**         | Heuristic: Euclidean distance to goal                                            |
-| **f-cost**         | Total estimated cost: f = g + h                                                  |
-| **Neighbors**      | 4-connected (up/down/left/right) or 8-connected (includes diagonals)             |
-| **Terrain Costs**  | Floor: 0, Grass: 2, Sand: 4, Water: 8, Obstacle: ∞                               |
-
 ## Results
 
 ![alt text](media/275video_720p.gif)
