@@ -279,6 +279,10 @@ This test helped identify an optimal resolution that balances map detail with re
 
 ## Results
 
+### Working Implementation
+
+The following GIF shows the robot navigating the environment, detecting obstacles, and updating the map in real-time. It demonstrates the integration of LiDAR and vision sensors, mapping, and A-Star pathfinding.
+
 ![alt text](media/275video_720p.gif)
 
 ### Data
