@@ -1,6 +1,6 @@
 # Multisensor Navigation System for Autonomous Robots
 
-A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, vision sensing and processing, and A-star pathfinding for autonomous robot navigation.
+A CoppeliaSim-based robot navigation project that integrates LiDAR sensing, vision sensing and processing, and A-Star pathfinding for autonomous robot navigation.
 
 ## Team Members and Roles
 
