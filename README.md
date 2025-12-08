@@ -29,13 +29,13 @@ The motivation behind this project is to investigate how autonomous robots can r
 
 ![Rescue Robot](media/RescueRobotIMG1.jpg)
 
-### ECSE275 Robotics Concepts
+### ECSE 275 Robotics Concepts Explored in This Project
 
 - A-Star algorithm path planning
 - LiDAR sensing
 - Vision sensing and processing
 - Differential drive robots
-- Creating simulations in CopelliaSIM
+- Simulations in CopelliaSIM
 - Python coding
 
 ### Deliverable
