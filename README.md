@@ -268,9 +268,11 @@ Three trials were conducted under two different camera FOV settings: 60° and 12
 
 **Variable Map Resolution**
 Navigation performance and A-Star pathfinding reliability were evaluated across map resolutions ranging from 25×25 to 500×500 cells. Resolution determines the size of cells in the occupancy grid:
+
 - Very low resolutions reduce computational cost but can oversimplify the environment, causing imprecise obstacle representation.
 - Higher resolutions create finer grids, allowing more precise representation of obstacles.
 - Extremely high resolutions produce cells smaller than the robot’s physical dimensions, which can lead to path-tracking errors and potential collisions.
+
 This test helped identify an optimal resolution that balances map detail with reliable navigation performance.
 
 ## Results
