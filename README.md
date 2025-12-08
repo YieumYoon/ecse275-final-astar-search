@@ -227,7 +227,7 @@ flowchart TB
         subgraph AStarDetail["A* Pathfinding"]
             Start["Start Position"]
             OpenSet["Priority Queue<br/>(open set)"]
-            GetNeighbors["Get Neighbors<br/>(4 or 8 connected)"]
+            GetNeighbors["Get Neighbors"]
             CalcCost["Calculate Costs<br/>g = movement + terrain<br/>h = Euclidean distance<br/>f = g + h"]
             CheckGoal{"Goal<br/>Reached?"}
             PathFound["Reconstruct Path"]
