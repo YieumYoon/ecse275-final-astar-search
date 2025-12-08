@@ -325,7 +325,7 @@ Lower resolutions (25–50) produced coarse maps that allowed fast path planning
 Overall, our implementation was successful. The system is able to detect obstacles and different terrain types, dynamically update A-Star paths, communicate shared maps between robots, and successfully navigate to the designated goals.
 
 **Some areas of struggle include:**
-- Connection Issues
+- Connection
   - Ensuring CoppeliaSim is running before executing the script
   - Verifying ZMQ Remote API is properly installed
   - Checking the scene contains required objects with correct names
