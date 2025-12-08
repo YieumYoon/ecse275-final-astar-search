@@ -132,8 +132,8 @@ python Final_project_main.py
    - Establish connection to CoppeliaSim
    - Initialize sensors (LiDAR and vision)
    - Process sensor data
-   - Detect objects and obstacles
-   - Build terrain map
+   - Detect obstacles and terrain
+   - Build map
    - Display processed images
 
 #### Main Script (`Final_project_main.py`)
