@@ -136,25 +136,21 @@ python Final_project_main.py
    - Build map
    - Display processed images
 
-#### Main Script (`Final_project_main.py`)
+- **Main Script (`Final_project_main.py`)**
+  - Establishes ZMQ connection to CoppeliaSim
+  - Initializes robot, sensors, and goal position
+  - Calls functions for LiDAR processing and RGB image capture for object and terrain detection
+  - Calls functions to handle coordinate transformations
+  - Integrates path planning, sensing, and mapping into the simulation loop
 
-- Establishes ZMQ connection to CoppeliaSim
-- Initializes robot, sensors, and goal position
-- Processes LiDAR data for obstacle detection
-- Captures and processes RGB and depth images
-- Performs color-based object detection
-- Transforms coordinates between sensor and world frames
-
-#### Function Library (`FP_funcs.py`)
-
-#### Vision Processing Functions
-
-- `process_vision_Sensor_RBG()` - Extract RGB images
-- `process_vision_sensor_depth()` - Extract depth maps
-- `compute_pos_from_pix()` - Convert pixel coordinates to 3D positions
-- `mask_color()` - Create binary mask for target color
-- `centroid_from_mask()` - Calculate centroid of detected objects
-- `depth_from_rgb_mask()` - Extract depth values from masked regions
+- **Functions Library (`FP_funcs.py`)**
+  - **Vision Processing Functions**
+    - `process_vision_Sensor_RBG()` - Extract RGB images
+    - `process_vision_sensor_depth()` - Extract depth maps
+    - `compute_pos_from_pix()` - Convert pixel coordinates to 3D positions
+    - `mask_color()` - Create binary mask for target color
+    - `centroid_from_mask()` - Calculate centroid of detected objects
+     - `depth_from_rgb_mask()` - Extract depth values from masked regions
 
 #### LiDAR Processing Functions
 
