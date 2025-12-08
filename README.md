@@ -25,7 +25,7 @@ A CoppeliaSim-based project that integrates LiDAR sensing, vision sensing and pr
 
 ### Motivation
 
-The motivation behind this project is to investigate how autonomous robots can reliably navigate complex, uncertain environments, which is an essential capability for real-world applications, especially with the rise of autonomous robots in our society, on the road, in warehouses, and in as search-and-rescue operations.
+The motivation behind this project is to investigate how autonomous robots can reliably navigate complex, uncertain environments, which is an essential capability for real-world applications, especially with the rise of autonomous robots in our society, on the road, in warehouses, and in search-and-rescue operations.
 
 ![Rescue Robot](media/RescueRobotIMG1.jpg)
 
