@@ -264,9 +264,11 @@ flowchart TB
 ### Testing to Measure Performance
 
 **Variable Field-of-View (FOV)**
+
 Three trials were conducted under two different camera FOV settings: 60° and 120°. For each trial, the time to reach the first goal and the time to reach all goals were recorded. This data quantified the impact of FOV on navigation efficiency and overall system performance, identifying an optimal FOV. 
 
 **Variable Map Resolution**
+
 Navigation performance and A-Star pathfinding reliability were evaluated across map resolutions ranging from 25×25 to 500×500 cells. Resolution determines the size of cells in the occupancy grid:
 
 - Very low resolutions reduce computational cost but can oversimplify the environment, causing imprecise obstacle representation.
